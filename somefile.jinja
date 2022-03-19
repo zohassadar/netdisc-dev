@@ -1,0 +1,19 @@
+{%
+   set virtual_servers = {
+    'pc_k8snode': {
+          'server1': {
+              'name': 'server001',
+              'ip_address': '10.10.10.10',
+          },
+          'server2': {
+              'name': 'server002',
+              'ip_address': '20.20.20.20',
+          },
+          'server_state': 'ENABLED',
+          'service_protocol': 'HTTP',
+          'service_port': '80',
+          'cs_ip_address': '30.30.30.30',
+          'cs_port': '443',
+    },
+  },
+%}

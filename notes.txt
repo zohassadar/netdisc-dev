@@ -1,0 +1,68 @@
+
+# Point to dead snakes repository
+# https://github.com/deadsnakes
+
+sudo add-apt-repository ppa:deadsnakes
+
+
+#Get packages
+sudo apt-get install python3.10
+sudo apt-get install python3.10-distutils
+
+
+
+# Possibly helpful
+sudo apt-get install python3.10-dev             
+sudo apt-get install python3.10-venv
+
+
+#Bootstrap pip
+curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
+
+
+#Upgrade install stuff
+python3.10 -m pip install setuptools -U
+python3.10 -m pip install wheel -U
+python3.10 -m pip install pip -U
+python3.10 -m pip install virtualenv -U
+
+
+#Create environment with custom prompt based on cwd
+echo  "${PWD##/*/} .venv"
+python3.10 -m virtualenv .venv --prompt "${PWD##/*/} .venv"
+
+# Activate and upgrade pip
+. .venv/bin/activate
+
+# Upgrade within pip
+python -m pip install -U pip
+
+
+# Install requirements
+pip install -r requirements-dev.txt
+pip install -r requirements.txt
+
+
+#Install and make editable
+pip install -e .
+
+
+#Setup repository
+git init
+
+#Install pre-commit hooks
+pre-commit install
+
+git add *
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin git@github.com-base-project-example:zohassadar/base-project-example.git
+git push -u origin main
+
+
+
+#Add pubkey to github
+REPONAME='base-project-example'
+ssh-keygen -f ~/.ssh/id_rsa_github_$REPONAME
+cat ~/.ssh/id_rsa_github_$REPONAME.pub 
+echo -e "Host github.com-$REPONAME\n  Hostname github.com\n  IdentityFile /home/rwd/.ssh/id_rsa_github_$REPONAME\n" >> ~/.ssh/config
