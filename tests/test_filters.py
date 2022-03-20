@@ -1,6 +1,7 @@
-import unittest
-from netdisc.tools import pandor
 import dataclasses
+import unittest
+
+from netdisc.tools import pandor
 
 
 @dataclasses.dataclass
@@ -65,14 +66,6 @@ class TestStupidTrees(unittest.TestCase):
     def test_stupid_tree_1(self):
         attr_filter = pandor.AttrFilterForkFactory(stupid_tree_1)
         self.assertIsInstance(attr_filter, pandor.MatchBoth)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-
-class TestStupidTrees(unittest.TestCase):
-    def test_stupid_tree_2(self):
-        attr_filter = pandor.AttrFilterForkFactory(stupid_tree_2)
-        self.assertIsInstance(attr_filter, pandor.MatchEither)
         self.assertTrue(attr_filter.filter(included))
         self.assertFalse(attr_filter.filter(excluded))
 
@@ -273,8 +266,6 @@ class TestNetworkAttrFilters(unittest.TestCase):
         filter_ = "   ip_address          not   in rfc1918"
         attr_filter = pandor.AttrFilterForkFactory(filter_)
 
-
-        
         self.assertIsInstance(attr_filter, pandor.NotInNetwork)
         self.assertTrue(attr_filter.filter(excluded))
         self.assertFalse(attr_filter.filter(included))

@@ -109,7 +109,7 @@ class MIBHelper:
 
     @convert_binding_fields.register
     def _(self, binding: snmpbase.VarBindBase):
-        if binding._converted:
+        if binding.converted:
             print("convert being skipped")
             return
         print("convert being called")
@@ -135,7 +135,7 @@ class MIBHelper:
                 type(xlate).__name__,
             )
             FLAG_MAP[xlate](self, binding, field)
-        binding._converted = True
+        binding.converted = True
 
 
 @FLAG_MAP.register_flag(snmpbase.MIBXlate.LOCAL_ENUM)
@@ -144,6 +144,7 @@ def local_enum_translation(
     binding: snmpbase.VarBindBase,
     field: dataclasses.field,
 ):
+    logger.debug("%s - %s - %s", type(helper), type(binding), field.name)
     value = getattr(binding, field.name)
     if not isinstance(value, int):
         logger.debug(
@@ -168,6 +169,7 @@ def mac_from_bytes(
     binding: snmpbase.VarBindBase,
     field: dataclasses.field,
 ):
+    logger.debug("%s - %s - %s", type(helper), type(binding), field.name)
     value = getattr(binding, field.name)
     if value is None:
         logger.debug("skipping due to NoneType")
@@ -199,7 +201,7 @@ def ip_from_bytes(
     binding: snmpbase.VarBindBase,
     field: dataclasses.field,
 ):
-    return
+    logger.debug("%s - %s - %s", type(helper), type(binding), field.name)
 
 
 @FLAG_MAP.register_flag(snmpbase.MIBXlate.OID)
@@ -208,6 +210,7 @@ def str_from_oid(
     binding: snmpbase.VarBindBase,
     field: dataclasses.field,
 ):
+    logger.debug("%s - %s - %s", type(helper), type(binding), field.name)
     oid = getattr(binding, field.name)
     lookup_mibs = field.metadata.get(snmpbase.METADATA_LOOKUP_INFO)
     helper.load_lookup_mibs(lookup_mibs)
@@ -221,6 +224,7 @@ def lookup_named_value(
     binding: snmpbase.VarBindBase,
     field: dataclasses.field,
 ):
+    logger.debug("%s - %s - %s", type(helper), type(binding), field.name)
     value = getattr(binding, field.name)
     if not isinstance(value, int):
         logger.debug(
@@ -248,6 +252,7 @@ def convert_timeticks_to_readable(
     binding: snmpbase.VarBindBase,
     field: dataclasses.field,
 ):
+    logger.debug("%s - %s - %s", type(helper), type(binding), field.name)
     value = getattr(binding, field.name)
     if not isinstance(value, int):
         logger.debug(
@@ -266,6 +271,7 @@ def convert_timestamp_to_readable(
     binding: snmpbase.VarBindBase,
     field: dataclasses.field,
 ):
+    logger.debug("%s - %s - %s", type(helper), type(binding), field.name)
     value = getattr(binding, field.name)
     if not isinstance(value, int):
         logger.debug(

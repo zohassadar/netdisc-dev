@@ -1,10 +1,23 @@
+"""
+python -c \
+'import sys
+import json
+data = json.loads(sys.stdin.read())
+print (
+    "\n".join(
+        set(
+            [d.get("sysinfo", "") for d in data]
+            )
+        )
+    )' \
+< raw_json_sysinfos.json > sysinfo_examples.txt
+"""
 import pytest
-from netdisc.base import Categorizer, Category, DeviceCategory
+from netdisc.base import Categorizer, Category
 
 
 categorizer = Categorizer()
 
-# python -c 'import sys;import json; print ("\n".join(set([d.get("sysinfo", "") for d in json.loads(sys.stdin.read()) ])))' < raw_json_sysinfos.json > sysinfo_examples.txt
 
 sysinfo_examples = [
     # "Examples of sysinfo responses go here",

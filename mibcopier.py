@@ -1,18 +1,21 @@
+r"""
+find ~/netdisc/ndsnmp/ -name "*.py" \
+ | xargs grep -hoP 'MIB = "\K[^"]*' \
+ | uniq \
+ | while read mib; \
+ do python ~/netdisc/pymib.py  \
+    -s ~/repos/netdisco-mibs/ \
+    -d ~/netdisc/netdisc/snmp/pymibs \
+    -r ~/netdisc/netdisc/snmp/asn1mibs $mib;
+ done
+"""
 import argparse
 import pathlib
 import re
 import shutil
 import string
 import subprocess
-
-"""
-find ~/netdisc/ndsnmp/ -name "*.py" \
- | xargs grep -hoP 'MIB = "\K[^"]*' \
- | uniq \
- | while read mib; \
- do python ~/netdisc/pymib.py -s ~/repos/netdisco-mibs/ -d ~/netdisc/netdisc/snmp/pymibs -r ~/netdisc/netdisc/snmp/asn1mibs $mib;
- done
-"""
+import pprint
 
 MIB_CONVERT = string.Template(
     r"""mibdump.py \
@@ -55,7 +58,6 @@ parser.add_argument(
 
 
 def main():
-    import pprint
 
     args = parser.parse_args()
     mib = args.mib[0]

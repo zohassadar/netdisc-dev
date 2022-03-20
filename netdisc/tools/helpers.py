@@ -5,7 +5,8 @@ import sys
 import time
 import typing
 
-from netdisc import output
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 _ASDICT = "_asdict"
 _ITER = "__iter__"
@@ -15,6 +16,7 @@ _INIT = "__init__"
 
 def dummy(*args, **kwargs):
     """Stand in function that returns itself"""
+    logger.debug("Dummy Executed with args: %s kwargs: %s", args, kwargs)
     return dummy
 
 
@@ -23,6 +25,9 @@ class NEED_LIST:
 
 
 def fake_orm_relationship(*args, **kwargs) -> NEED_LIST:
+    logger.debug(
+        "fake_orm_relationship Executed with args: %s kwargs: %s", args, kwargs
+    )
     return NEED_LIST
 
 
@@ -144,7 +149,7 @@ class suppress_logs:
         )
 
 
-def debugger(level: int = logging.DEBUG) -> typing.Callable:
+def debugger(level: int = logging.DEBUG, old_trim: bool = False) -> typing.Callable:
     if not isinstance(level, int):
         raise ValueError("debugger must be called with log level when decorating")
 
@@ -159,17 +164,14 @@ def debugger(level: int = logging.DEBUG) -> typing.Callable:
             obj_limited = "".join((obj_limited, TRIMMED_SUFFIX))
         return obj_limited
 
-    @functools.singledispatch
-    def trimmer(obj):
+    def new_trimmer(obj):
         pretty = pprint.pformat(obj)
         NEWLINE = "\n"
         if NEWLINE in pretty:
             pretty = "".join((NEWLINE, pretty))
         return pretty
 
-    # Placeholder to treat different objects differently
-    # @trimmer.register
-    # def _(obj: list):
+    trimmer = new_trimmer if not old_trim else old_trimmer
 
     def arg_kwarg_trimmer(*args, **kwargs):
         limited = []

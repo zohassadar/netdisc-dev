@@ -47,13 +47,13 @@ def xlate(key: MIBXlate, extras: typing.Any = None):
 
 @dataclasses.dataclass
 class VarBindBase:
-    _converted = False
     _MIB_NOT_SET = object()
     CONTAINER = dict()
     MIB = _MIB_NOT_SET
     LOOKUP_MIBS = ()
 
     def __post_init__(self):
+        self.converted = False
         if self.MIB is self._MIB_NOT_SET:
             raise ValueError(f"Attribute MIB is not defined for {type(self).__name__}")
 
