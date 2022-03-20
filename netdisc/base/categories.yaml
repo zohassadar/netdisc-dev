@@ -1,0 +1,60 @@
+CISCO_IOS:
+  sysinfo: Cisco IOS Software
+  running: show running-config
+  startup: show startup-config
+  netmiko: cisco_ios
+  save: write memory
+CISCO_XR:
+  sysinfo: Cisco IOS XR Software
+  running: show running-config
+  netmiko: cisco_xr
+ARISTA_EOS: 
+  sysinfo: Arista Networks
+  running: show running-config
+  startup: show startup-config
+  netmiko: arista_eos
+CISCO_NXOS: 
+  sysinfo: Cisco NX-OS
+  running: show running-config
+  startup: show startup-config
+  netmiko: cisco_nxos
+CISCO_ASA: 
+  sysinfo: Cisco Adaptive Security Appliance
+  running: show running-config
+  startup: show startup-config
+  netmiko: cisco_asa
+HP_COMWARE: 
+  sysinfo: HP Comware Platform Software
+HP_PROCURVE: 
+  sysinfo: ProCurve
+F5_BIGIP: 
+  sysinfo: BIG-IP
+  running: cat /config/bigip.conf
+  netmiko: f5_linux
+PALOALTO_PANOS: 
+  sysinfo: Palo Alto Networks
+  netmiko: paloalto_panos
+CISCO_FXOS: 
+  sysinfo: Cisco FX-OS
+AVAYA: 
+  sysinfo: Avaya Inc
+DELL: 
+  sysinfo: Dell EMC
+LINUX:
+  sysinfo: ^Linux
+CISCO_CIMC:
+  sysinfo: ^Cisco Integrated Management Controller
+NIMBLE:
+  sysinfo: ^Nimble Storage
+WINDOWS_SERVER:
+  sysinfo: Microsoft Windows Server
+CISCO_WLC:
+  sysinfo: ^Cisco Controller
+SONUS:
+  sysinfo: ^Sonus SBC
+NETGEAR:
+  sysinfo: GS724Tv3
+CISCO_ISE:
+  sysinfo: ^Cisco Identity Services Engine
+AVAYA_AURA:
+  sysinfo: Avaya Aura
