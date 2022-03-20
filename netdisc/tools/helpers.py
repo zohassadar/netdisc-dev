@@ -26,23 +26,23 @@ def fake_orm_relationship(*args, **kwargs) -> NEED_LIST:
     return NEED_LIST
 
 
-def add_kwargs_init(*wrapped, filter=None):
+def add_kwargs_init(*wrapped, filter_=None):
     if wrapped and len(wrapped) > 1 or wrapped and filter:
         raise ValueError(
             "add_as_dict takes 1 positional argument or 1 keyword argument"
         )
 
-    if not filter:
-        filter = lambda _: _
+    if not filter_:
+        filter_ = lambda _: _
 
     def new_init(self, **kwargs):
-        for property in dir(self):
-            if not property.startswith("_"):
-                if getattr(self, property) is NEED_LIST:
-                    setattr(self, property, [])
+        for prop in dir(self):
+            if not prop.startswith("_"):
+                if getattr(self, prop) is NEED_LIST:
+                    setattr(self, prop, [])
         for key, value in kwargs.items():
             print(f"{key=} {value=}")
-            if hasattr(self, key) and filter(key):
+            if hasattr(self, key) and filter_(key):
                 setattr(self, key, value)
             else:
                 raise AttributeError(
@@ -58,8 +58,8 @@ def add_kwargs_init(*wrapped, filter=None):
     return wrapper
 
 
-def add_as_dict(*wrapped, filter: typing.Callable = None):
-    if wrapped and len(wrapped) > 1 or wrapped and filter:
+def add_as_dict(*wrapped, filter_: typing.Callable = None):
+    if wrapped and len(wrapped) > 1 or wrapped and filter_:
         raise ValueError(
             "add_as_dict takes 1 positional argument or 1 keyword argument"
         )
