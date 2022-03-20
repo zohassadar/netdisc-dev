@@ -3,6 +3,40 @@ import typing
 from netdisc.base import device
 
 
+class Accumulator(abc.ABC):
+    @abc.abstractmethod
+    def base_info(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def interfaces(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def neighbors(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def routes(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def vlans(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def vrfs(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def macs(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def arps(self):
+        raise NotImplementedError
+
+
 class TopologyBase(abc.ABC):
     @abc.abstractmethod
     def get_device(

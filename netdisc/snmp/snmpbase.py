@@ -168,7 +168,7 @@ class LLDPGlobal(ZeroIndex):
 
 
 @dataclasses.dataclass(frozen=True)
-class LLDPMgmtIndex:
+class LLDPLocMgmtIndex:
     af: str = None
     ip: str = None
 
@@ -183,16 +183,16 @@ class LLDPMgmtIndex:
             object.__setattr__(self, "ip", ip)
 
 
-class LLDPManagementDict(dict):
+class LLDPLocMgmtDict(dict):
     @functools.cached_property
-    def info_by_ip_address(self) -> dict[str, LLDPMgmtInterface]:
+    def info_by_ip_address(self) -> dict[str, LLDPLocMgmtIntf]:
         return {idx.ip: info for idx, info in self.items()}
 
 
 @dataclasses.dataclass
-class LLDPMgmtInterface(WalkRequired):
-    CONTAINER = LLDPManagementDict
-    INDEX = LLDPMgmtIndex
+class LLDPLocMgmtIntf(WalkRequired):
+    CONTAINER = LLDPLocMgmtDict
+    INDEX = LLDPLocMgmtIndex
     MIB = "LLDP-MIB"
     lldpLocManAddrSubtype: str = None
     lldpLocManAddrLen: str = None
@@ -234,7 +234,7 @@ class LLDPNeighIdx:
 
     def __post_init__(self):
         if self.NEEDS_CONVERTED(str(self.number)):
-            number, lldp_if, neighbor = self.number.split(".")
+            number, lldp_if, neighbor = tuple(map(int, self.number.split(".")))
             object.__setattr__(self, "number", number)
             object.__setattr__(self, "lldp_if", lldp_if)
             object.__setattr__(self, "neighbor", neighbor)
@@ -290,6 +290,51 @@ class LLDPNeighbor(WalkRequired):
         ),
         default=None,
     )
+
+
+@dataclasses.dataclass(frozen=True)
+class LLDPRemMgmtIndex:
+    number: int = None
+    lldp_if: int = None
+    neighbor: int = None
+    af: str = None
+    ip: str = None
+
+    def __post_init__(self):
+        OID_PATTERN = re.compile(r"(?:\d+\.){5,}").search
+        IPV4_TAG = "ipV4"
+        if isinstance(self.number, str) and OID_PATTERN(self.number):
+            logger.debug("Index delivered as OID beginning with %s", self.number)
+            oid_split = self.number.split(".")
+            if not oid_split[3:5] == ["1", "4"]:
+                logger.error("unknown address family: %s", oid_split[3:5])
+                return
+            number, lldp_if, neighbor = tuple(map(int, oid_split[:3]))
+            ip = ".".join(oid_split[5:])
+            af = IPV4_TAG
+            object.__setattr__(self, "number", number)
+            object.__setattr__(self, "lldp_if", lldp_if)
+            object.__setattr__(self, "neighbor", neighbor)
+            object.__setattr__(self, "af", af)
+            object.__setattr__(self, "ip", ip)
+
+
+class LLDPRemMgmtDict(dict):
+    @functools.cached_property
+    def ip_by_neigh_idx(self) -> dict[tuple[int, int, int], str]:
+        results = {}
+        for idx in self:
+            neigh_idx = LLDPNeighIdx(idx.number, idx.lldp_if, idx.neighbor)
+            results.update({neigh_idx: idx.ip})
+        return results
+
+
+@dataclasses.dataclass
+class LLDPRemMgmtIntf(WalkRequired):
+    CONTAINER = LLDPRemMgmtDict
+    INDEX = LLDPRemMgmtIndex
+    MIB = "LLDP-MIB"
+    lldpRemManAddrIfId: int = None
 
 
 @dataclasses.dataclass(frozen=True)

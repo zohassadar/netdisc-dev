@@ -5,51 +5,15 @@ import abc
 import dataclasses
 import pprint
 
-from netdisc.base import device
+from netdisc.base import device, abstract
 from netdisc.snmp import easyeng, engine, helper, pyeng, snmpbase
 import logging
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
 pp = lambda *a, **kw: pprint.pprint(*a, width=200, **kw)
-
-
-@dataclasses.dataclass
-class SNMPAccumulator(abc.ABC):
-    engine: engine.SNMPEngine
-
-    @abc.abstractmethod
-    def base_info(self):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def interfaces(self):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def neighbors(self):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def routes(self):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def vlans(self):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def vrfs(self):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def macs(self):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def arps(self):
-        raise NotImplementedError
 
 
 def unfiltered(value):
@@ -100,7 +64,9 @@ def apply_mapping(binding: snmpbase.VarBindBase, mapping: dict, result: dict) ->
 
 
 @dataclasses.dataclass
-class Generic(SNMPAccumulator):
+class Generic(abstract.Accumulator):
+    engine: engine.SNMPEngine
+
     def __post_init__(self):
         self.device_ip = self.engine.host
         self._OBJECT_CACHE = {}
@@ -121,14 +87,9 @@ class Generic(SNMPAccumulator):
                 for result in self.interfaces()
             ]
         )
-        import pprint
-
-        pprinter = pprint.PrettyPrinter(width=200)
-        pp = pprinter.pprint
 
         processed = []
         for neighbor in self.neighbors():
-            pp(neighbor)
             neighbor = device.Neighbor(device_ip=self.device_ip, **neighbor)
             processed.append(neighbor)
         result.neighbors.extend(processed)
@@ -153,17 +114,21 @@ class Generic(SNMPAccumulator):
             snmpbase.LLDPNeighIdx, snmpbase.LLDPNeighbor
         ] = self.object_cache_get(snmpbase.LLDPNeighbor)
         interfaces: snmpbase.InterfaceDict = self.object_cache_get(snmpbase.IFMIB)
-        import pprint
-
+        lldp_mgmt_ips: snmpbase.LLDPRemMgmtDict = self.object_cache_get(
+            snmpbase.LLDPRemMgmtIntf
+        )
+        pp(lldp_mgmt_ips)
         results = []
-        print(id(results))
-        for idx, neighbor in neighbors.neighbor_by_lldp_if.items():
+        for idx, neighbor in neighbors.items():
+            logger.debug("Processing neighbor index: %s", idx)
+            intf_idx = idx.lldp_if
             lldp_port: snmpbase.LLDPInterface = neighbor_ports.interfaces_by_lldp_if[
-                idx
+                intf_idx
             ]
-            lldp_port = neighbor_ports.interfaces_by_lldp_if[idx]
             interface = interfaces.interfaces_by_if_descr[lldp_port.lldpLocPortDesc]
             result = apply_mapping(interface, LLDP_IF_MAP, {})
+            if mgmt_ip := lldp_mgmt_ips.ip_by_neigh_idx.get(idx):
+                result["ip"] = mgmt_ip
             results.append(apply_mapping(neighbor, LLDP_NEIGHBOR_MAP, result))
         return results
 
@@ -183,7 +148,7 @@ class Generic(SNMPAccumulator):
         pass
 
 
-class UnknownDevice(SNMPAccumulator):
+class UnknownDevice(abstract.Accumulator):
     ...
 
 
