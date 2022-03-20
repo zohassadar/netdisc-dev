@@ -1,10 +1,10 @@
-import enum
-from sys import flags
-import regex
-import pathlib
 import dataclasses
-import yaml
+import enum
 import functools
+import pathlib
+
+import regex
+import yaml
 
 
 class NetDiscCategoryError(ValueError):
@@ -74,8 +74,8 @@ class Categorizer:
     def __post_init__(self):
         self._categories: dict[str, dict] = {}
         self._loaded_categories: dict[str, DeviceCategory] = {}
-        with open(CATEGORIES) as f:
-            self._categories = yaml.safe_load(f)
+        with open(CATEGORIES) as file:
+            self._categories = yaml.safe_load(file)
         for name, info in self._categories.items():
             if name not in self.all_categories:
                 raise NetDiscCategoryError(f"Category {name} is not defined")
@@ -121,7 +121,6 @@ class Categorizer:
         for category in self._loaded_categories.values():
             if category.sysinfo_compiled.search(sysinfo):
                 return category
-        else:
-            raise NetDiscCategoryError(
-                f"Sysinfo provided doesn't match any configured category:\n{sysinfo}"
-            )
+        raise NetDiscCategoryError(
+            f"Sysinfo provided doesn't match any configured category:\n{sysinfo}"
+        )

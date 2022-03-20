@@ -24,4 +24,3 @@ class MemoryTopology(abstract.TopologyBase):
 
     def update_device(self, dev: device.Device):
         assert hasattr(dev, "device_ip")
-        pass

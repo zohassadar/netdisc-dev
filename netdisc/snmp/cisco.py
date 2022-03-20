@@ -1,12 +1,12 @@
 import dataclasses
-from snmp import base
+from netdisc.snmp import snmpbase
 
 
 @dataclasses.dataclass
-class CiscoSNMPv2(base.SNMPv2):
+class CiscoSNMPv2(snmpbase.SNMPv2):
     sysObjectID: str = dataclasses.field(
-        metadata=base.xlate(
-            base.MIBXlate.OID,
+        metadata=snmpbase.xlate(
+            snmpbase.MIBXlate.OID,
             extras=("CISCO-PRODUCTS-MIB",),
         ),
         default=None,
@@ -14,11 +14,11 @@ class CiscoSNMPv2(base.SNMPv2):
 
 
 @dataclasses.dataclass
-class CDPGlobal(base.ZeroIndex):
+class CDPGlobal(snmpbase.ZeroIndex):
     MIB = "CISCO-CDP-MIB"
     cdpGlobalRun: str = dataclasses.field(
-        metadata=base.xlate(
-            key=base.MIBXlate.NAMED_VALUE,
+        metadata=snmpbase.xlate(
+            key=snmpbase.MIBXlate.NAMED_VALUE,
         ),
         default=None,
     )
@@ -26,8 +26,8 @@ class CDPGlobal(base.ZeroIndex):
     cdpGlobalHoldTime: str = None
     cdpGlobalDeviceId: str = None
     cdpGlobalLastChange: str = dataclasses.field(
-        metadata=base.xlate(
-            key=base.MIBXlate.TIMESTAMP,
+        metadata=snmpbase.xlate(
+            key=snmpbase.MIBXlate.TIMESTAMP,
         ),
         default=None,
     )
@@ -39,12 +39,12 @@ class CDPIntIdx:
 
 
 @dataclasses.dataclass
-class CDPInterface(base.WalkRequired):
+class CDPInterface(snmpbase.WalkRequired):
     INDEX = CDPIntIdx
     MIB = "CISCO-CDP-MIB"
     cdpInterfaceEnable: str = dataclasses.field(
-        metadata=base.xlate(
-            key=base.MIBXlate.NAMED_VALUE,
+        metadata=snmpbase.xlate(
+            key=snmpbase.MIBXlate.NAMED_VALUE,
         ),
         default=None,
     )
@@ -54,7 +54,7 @@ class CDPInterface(base.WalkRequired):
 
 
 @dataclasses.dataclass
-class CDPNeighbor(base.WalkRequired):
+class CDPNeighbor(snmpbase.WalkRequired):
     MIB = "CISCO-CDP-MIB"
     cdpCacheAddress: str = None
     cdpCacheAddressType: str = None
@@ -74,17 +74,7 @@ class CDPNeighbor(base.WalkRequired):
 
 
 @dataclasses.dataclass
-class CiscoVTPInfo(base.WalkRequired):
-    MIB = "CISCO-VTP-MIB"
-    vtpVlanState: str = None
-    vtpVlanType: str = None
-    vtpVlanName: str = None
-    vtpVlanMtu: str = None
-    vtpVlanIfIndex: str = None
-
-
-@dataclasses.dataclass
-class CiscoVTPInfo(base.WalkRequired):
+class CiscoVTPInfo(snmpbase.WalkRequired):
     MIB = "CISCO-VTP-MIB"
     vtpVlanState: str = None
     vtpVlanType: str = None
@@ -95,7 +85,7 @@ class CiscoVTPInfo(base.WalkRequired):
 
 @dataclasses.dataclass
 class CiscoMACTableEntry(
-    base.MACTableEntry,
-    base.CiscoVLANFuckery,
+    snmpbase.MACTableEntry,
+    snmpbase.CiscoVLANFuckery,
 ):
     ...

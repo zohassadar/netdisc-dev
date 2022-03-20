@@ -30,7 +30,7 @@ KEYS_AUTH = (
 
 KEYS_DB = ("dbfile",)
 
-import enum
+
 
 
 class Discovery(enum.IntFlag):

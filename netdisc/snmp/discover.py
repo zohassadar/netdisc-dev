@@ -1,20 +1,8 @@
-from netdisc.base import device
-from netdisc.snmp import snmpbase
-from snmp import engine, cisco
+from netdisc.base import constant, device
+from netdisc.snmp import engine
 
 
-from netdisc.base import constant
-
-
-
-
-def discover(engine: engine.SNMPEngine, flags: constant.Discovery) -> device.Device:
+def discover(eng: engine.SNMPEngine, flags: constant.Discovery) -> device.Device:
+    print(eng)
+    print(flags)
     return device.Device()
-
-
-
-heh = discover(engine.SNMPEngine(), constant.Discovery.DEVICE_INFO)
-
-
-
-

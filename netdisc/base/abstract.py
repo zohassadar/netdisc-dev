@@ -1,9 +1,13 @@
+""" Definitions of base classes
+Copyright 2022 Richard Dodson
+"""
 import abc
-import typing
 from netdisc.base import device
 
 
 class Accumulator(abc.ABC):
+    """Collect information and provide a device"""
+
     @abc.abstractmethod
     def base_info(self):
         raise NotImplementedError
@@ -38,6 +42,8 @@ class Accumulator(abc.ABC):
 
 
 class TopologyBase(abc.ABC):
+    """Interact with the discovered topology"""
+
     @abc.abstractmethod
     def get_device(
         self,
@@ -48,73 +54,21 @@ class TopologyBase(abc.ABC):
     @abc.abstractmethod
     def delete_device(
         self,
-        device: device.Device,
+        dev: device.Device,
     ) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
     def update_device(
         self,
-        device: device.Device,
+        dev: device.Device,
     ) -> None:
         raise NotImplementedError
 
 
-class DiscoverBase(abc.ABC):
-    @abc.abstractmethod
-    def __init__(
-        self,
-        **kwargs,
-    ):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def discover(
-        self,
-        ip: str,
-        hostname: str = None,
-        sysinfo: str = None,
-    ):
-        raise NotImplementedError
-
-
-class DeviceInteract(abc.ABC):
-    @abc.abstractmethod
-    def get_base(self) -> dict:
-        raise NotImplementedError
-
-    def get_vlans(self) -> typing.List[dict]:
-        raise NotImplementedError
-
-    def get_macs(self) -> typing.List[dict]:
-        raise NotImplementedError
-
-    def get_interfaces(self) -> typing.List[dict]:
-        raise NotImplementedError
-
-    def get_neighbors(self) -> typing.List[dict]:
-        raise NotImplementedError
-
-    def get_vrfs(self) -> typing.List[dict]:
-        raise NotImplementedError
-
-    def get_arps(self) -> typing.List[dict]:
-        raise NotImplementedError
-
-    def get_routes(self) -> typing.List[dict]:
-        raise NotImplementedError
-
-
-class FilterBase(abc.ABC):
-    @abc.abstractmethod
-    def filter(
-        self,
-        item: typing.Any,
-    ) -> typing.List[typing.Any]:
-        raise NotImplementedError
-
-
 class QueueBase(abc.ABC):
+    """Queueing solution"""
+
     @abc.abstractmethod
     def empty(self):
         raise NotImplementedError
@@ -132,13 +86,9 @@ class QueueBase(abc.ABC):
         raise NotImplementedError
 
 
-class WorkerBase(abc.ABC):
-    @abc.abstractmethod
-    def __call__(self, task):
-        raise NotImplementedError
-
-
 class OutputBase(abc.ABC):
+    """Output methods"""
+
     @abc.abstractmethod
     def dump(
         self,
@@ -157,6 +107,8 @@ class OutputBase(abc.ABC):
 
 
 class AuthMethodBase(abc.ABC):
+    """Authentication methods"""
+
     @abc.abstractmethod
     def extend(self):
         raise NotImplementedError

@@ -36,8 +36,7 @@ class FilterLogByModules:
         for module in name.split("."):
             if module in self.modules:
                 return True
-        else:
-            return False
+        return False
 
     def filter(self, record: logging.LogRecord) -> bool:
         return self._filtered.setdefault(

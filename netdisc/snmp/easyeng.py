@@ -1,18 +1,3 @@
-import dataclasses
-import logging
-import os
-import pathlib
-import shutil
-import typing
-import subprocess
-import easysnmp
-import easysnmp.exceptions
-
-from netdisc.snmp import asn1mibs, engine
-
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-
 """
 
 https://easysnmp.readthedocs.io/en/latest/
@@ -20,15 +5,27 @@ sudo apt-get install libsnmp-dev snmp-mibs-downloader
 sudo apt-get install gcc python-dev
 
 pip install easysnmp
-
 """
+import dataclasses
+import logging
+import typing
+import easysnmp
+import easysnmp.exceptions
+
+from netdisc.snmp import engine
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
 
 EASY_AUTHS = ("MD5", "SHA")
 EASY_PRIVS = ("AES", "DES", "3DES")
 
 
 class EasySNMPEngine(engine.SNMPEngine):
-    """"""
+    def __init__(self, *args, **kwargs):
+        self._kwargs = {}
+        super().__init__(*args, **kwargs)
 
     def setup(self):
         logger.debug("%s starting setting up", type(self))
@@ -45,12 +42,11 @@ class EasySNMPEngine(engine.SNMPEngine):
         # # self._kwargs["best_guess"] = 2
         self._session = easysnmp.Session(**self._kwargs)
         logger.debug("%s finished setting up", type(self))
-        """
-        best_guess – this setting controls how oids are parsed; setting to 0 causes a 
-        regular lookup. setting to 1 causes a regular expression match 
-        (defined as -Ib in snmpcmd); setting to 2 causes a random access lookup
-        (defined as -IR in snmpcmd).
-        """
+
+        # best_guess – this setting controls how oids are parsed; setting to 0 causes a
+        # regular lookup. setting to 1 causes a regular expression match
+        # (defined as -Ib in snmpcmd); setting to 2 causes a random access lookup
+        # (defined as -IR in snmpcmd).
 
     def set_v3_auth_priv(
         self,
@@ -60,7 +56,6 @@ class EasySNMPEngine(engine.SNMPEngine):
         privtype: str,
         priv: str,
     ):
-        self._kwargs = {}
         if auth not in EASY_AUTHS:
             raise ValueError(f"Invalid Auth Type for Easy SNMP: {auth}")
         if priv not in EASY_PRIVS:
@@ -79,7 +74,6 @@ class EasySNMPEngine(engine.SNMPEngine):
         authtype: str,
         auth: str,
     ):
-        self._kwargs = {}
         if auth not in EASY_AUTHS:
             raise ValueError(f"Invalid Auth Type for Easy SNMP: {auth}")
         self._kwargs["version"] = 3
@@ -92,7 +86,6 @@ class EasySNMPEngine(engine.SNMPEngine):
         self,
         snmpuser: str,
     ):
-        self._kwargs = {}
         self._kwargs["version"] = 3
         self._kwargs["security_level"] = "no_auth_or_privacy"
         self._kwargs["security_username"] = snmpuser
@@ -101,7 +94,6 @@ class EasySNMPEngine(engine.SNMPEngine):
         self,
         community: str,
     ):
-        self._kwargs = {}
         self._kwargs["version"] = 2
         self._kwargs["community"] = community
 
@@ -188,7 +180,7 @@ class EasySNMPEngine(engine.SNMPEngine):
             processed.append((index, field, value))
         return processed
 
-    def _object_paths_compile(self, binding, index=None):
+    def object_paths_compile(self, binding, index=None):
         paths = []
         for field in dataclasses.fields(binding):
             prefix = f"{binding.MIB}::{field.name}"

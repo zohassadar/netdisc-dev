@@ -17,7 +17,7 @@
 !pyproject.toml
 
 *.yaml
-!netdisc_category/categories.yaml
+!netdisc/base/categories.yaml
 !.github/workflows/tests.yaml
 
 *.txt*

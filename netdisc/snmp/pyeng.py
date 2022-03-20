@@ -1,3 +1,11 @@
+"""
+To add more mibs:
+
+MIB_DIR='/home/rwd/mibs.thola.io'
+
+mibdump.py --mib-source $MIB_DIR --destination-directory=~/netdisc/ndsnmp/mibs CISCO-PRODUCTS-MIB
+
+"""
 import dataclasses
 import logging
 import pprint
@@ -19,14 +27,6 @@ from netdisc.snmp import snmpbase, engine
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-"""
-
-DISCO_MIBS='/mnt/c/Users/richa/OneDrive/Desktop/bash/clone/netdisco-mibs/'
-
-mibdump.py --mib-source $DISCO_MIBS --destination-directory=~/netdisc/ndsnmp/mibs CISCO-PRODUCTS-MIB
-
-"""
-
 
 PY_AUTH_TABLE = {
     "MD5": pysnmp.hlapi.auth.usmHMACMD5AuthProtocol,
@@ -43,7 +43,9 @@ PY_PRIV_TABLE = {
 
 
 class PySNMPEngine(engine.SNMPEngine):
-    """"""
+    def __init__(self, *args, **kwargs):
+        self._credential = None
+        super().__init__(*args, **kwargs)
 
     def setup(self):
         logger.debug("PySNMP Setup started")
@@ -212,7 +214,7 @@ class PySNMPEngine(engine.SNMPEngine):
             var_bindings.append(object_type)
         return var_bindings
 
-    def _object_paths_compile(self, binding: snmpbase.VarBindBase, index: int = None):
+    def object_paths_compile(self, binding: snmpbase.VarBindBase, index: int = None):
         paths = []
         for field in dataclasses.fields(binding):
             if index is not None:
@@ -222,6 +224,11 @@ class PySNMPEngine(engine.SNMPEngine):
         return paths
 
     def _process_index(self, oid, var_bind):
+        logging.debug(
+            "Received index with: oid=%s var_bind=%s",
+            oid,
+            var_bind,
+        )
         mib, field, indices = oid.getMibSymbol()
         logger.debug("Processing index result for %s::%s", mib, field)
         indices_results = []
@@ -306,7 +313,8 @@ class PySNMPEngine(engine.SNMPEngine):
             label, value = self._process_var_bind(oid, var_bind)
             if not isinstance(label, str):
                 raise ValueError(
-                    f"Label is not a string.  Is is {type(label)}.  Result from: {oid!r} {var_bind!r}"
+                    f"Label is not a string. "
+                    f" Is is {type(label)}.  Result from: {oid!r} {var_bind!r}"
                 )
             results.append((index, label, value))
         return results

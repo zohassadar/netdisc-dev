@@ -79,7 +79,7 @@ class HostListAccumulator:
         logger.debug("Bytes received for host list")
         try:
             host = ipaddress.IPv4Address(host)
-        except:
+        except ipaddress.AddressValueError:
             logger.debug("Bytes provided is not an IP address: %s", host)
         self.add_host(str(host))
 
@@ -88,7 +88,7 @@ class HostListAccumulator:
         logger.debug("int received for host list")
         try:
             host = ipaddress.IPv4Address(host)
-        except:
+        except ipaddress.AddressValueError:
             logger.debug("Int provided is not an IP address: %s", host)
         self.add_host(str(host))
 
@@ -109,7 +109,3 @@ class HostListAccumulator:
         logger.debug("Dict received for host list")
         for host in hostlist.values():
             self.ingest(host)
-
-    @ingest.register
-    def _(self, nothing: None):
-        ...

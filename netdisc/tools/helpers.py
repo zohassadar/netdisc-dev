@@ -27,7 +27,7 @@ def fake_orm_relationship(*args, **kwargs) -> NEED_LIST:
 
 
 def add_kwargs_init(*wrapped, filter_=None):
-    if wrapped and len(wrapped) > 1 or wrapped and filter:
+    if wrapped and len(wrapped) > 1 or wrapped and filter_:
         raise ValueError(
             "add_as_dict takes 1 positional argument or 1 keyword argument"
         )
@@ -64,11 +64,11 @@ def add_as_dict(*wrapped, filter_: typing.Callable = None):
             "add_as_dict takes 1 positional argument or 1 keyword argument"
         )
 
-    if not filter:
-        filter = lambda _: _
+    if not filter_:
+        filter_ = lambda _: _
 
     def new_asdict(self):
-        return {k: v for k, v in self.__dict__.items() if filter(k)}
+        return {k: v for k, v in self.__dict__.items() if filter_(k)}
 
     def wrapper(cls):
         setattr(cls, _ASDICT, new_asdict)
@@ -79,14 +79,14 @@ def add_as_dict(*wrapped, filter_: typing.Callable = None):
     return wrapper
 
 
-def dict_repr_helper(*wrapped, filter=None):
-    if wrapped and len(wrapped) > 1 or wrapped and filter:
+def dict_repr_helper(*wrapped, filter_=None):
+    if wrapped and len(wrapped) > 1 or wrapped and filter_:
         raise ValueError(
             "add_as_dict takes 1 positional argument or 1 keyword argument"
         )
 
-    if not filter:
-        filter = lambda _: _
+    if not filter_:
+        filter_ = lambda _: _
 
     def new_repr(self):
         return (
@@ -100,7 +100,7 @@ def dict_repr_helper(*wrapped, filter=None):
         return iter(self._asdict().items())
 
     def wrapper(cls):
-        add_as_dict(filter=filter)(cls)
+        add_as_dict(filter_=filter_)(cls)
         setattr(cls, _ITER, new_iter)
         setattr(cls, _REPR, new_repr)
         return cls

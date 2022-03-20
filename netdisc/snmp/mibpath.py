@@ -1,5 +1,5 @@
 import pathlib
-import snmp.asn1mibs
+from netdisc.snmp import asn1mibs
 
 
 NET_SNMP_MIBS_ENV = "MIBDIRS"
@@ -19,7 +19,7 @@ MIB_HOME = pathlib.Path.joinpath(
     pathlib.Path(".snmp/mibs"),
 )
 
-MIB_SOURCE = pathlib.Path(snmp.asn1mibs.__file__).parent
+MIB_SOURCE = pathlib.Path(asn1mibs.__file__).parent
 
 MIB_SEARCH_PATH = []
 

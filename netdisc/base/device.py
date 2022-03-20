@@ -1,16 +1,14 @@
-import enum
 import logging
 import typing
 
 from netdisc.tools import helpers
-from netdisc.base import constant
 
 ORM_BUILTINS = ("registry", "metadata", "mro")
 
 builtin_filter = lambda key: not key.startswith("_") and not key in ORM_BUILTINS
 
-orm_helper = helpers.dict_repr_helper(filter=builtin_filter)
-add_kwargs_init = helpers.add_kwargs_init(filter=builtin_filter)
+orm_helper = helpers.dict_repr_helper(filter_=builtin_filter)
+add_kwargs_init = helpers.add_kwargs_init(filter_=builtin_filter)
 
 TABLE_ARP = "arp"
 TABLE_DEVICE = "device"
@@ -28,7 +26,6 @@ KEY_DEVICE = "device_ip"
 KEY_INTERFACE = "interface_name"
 KEY_VLAN = "vlan_id"
 KEY_VRF = "vrf_name"
-import logging
 
 try:
     import sqlalchemy
@@ -321,10 +318,10 @@ class Interface(DeclarativeBase):
     speed = sqlalchemy.Column(sqlalchemy.String)
     duplex = sqlalchemy.Column(sqlalchemy.String)
     media = sqlalchemy.Column(sqlalchemy.String)
-    # vlans = orm.relationship(VLAN.__name__)
+    vlans = orm.relationship("VLAN")
     # vlan_interfaces = orm.relationship(VLANInterface.__name__)
-    ip_addresses = orm.relationship(IP.__name__)
-    ipv6_addresses = orm.relationship(IPv6.__name__)
+    ip_addresses = orm.relationship("IP")
+    ipv6_addresses = orm.relationship("IPv6")
 
 
 # @orm_helper
@@ -345,6 +342,21 @@ class Interface(DeclarativeBase):
 #     trunk = sqlalchemy.Column(sqlalchemy.Boolean)
 #     voice = sqlalchemy.Column(sqlalchemy.Boolean)
 #     # macs = orm.relationship(MAC.__name__)
+
+
+@orm_helper
+class VLAN(DeclarativeBase):
+    __tablename__ = TABLE_VLAN
+    device_ip = sqlalchemy.Column(
+        sqlalchemy.String,
+        sqlalchemy.ForeignKey(".".join((TABLE_DEVICE, KEY_DEVICE))),
+    )
+    vlan_id = sqlalchemy.Column(
+        sqlalchemy.Integer,
+        primary_key=True,
+    )
+    name = sqlalchemy.Column(sqlalchemy.String)
+    # vlan_interfaces = orm.relationship(VLANInterface.__name__)
 
 
 # an example mapping using the base
@@ -370,7 +382,7 @@ class Device(DeclarativeBase):
 
     interfaces: typing.List[Interface] = orm.relationship(Interface.__name__)
     neighbors: typing.List[Neighbor] = orm.relationship(Neighbor.__name__)
-    # vlans: typing.List[VLAN] = orm.relationship(VLAN.__name__)
+    vlans: typing.List[VLAN] = orm.relationship(VLAN.__name__)
     vrfs: typing.List[VRF] = orm.relationship(VRF.__name__)
     routes: typing.List[Route] = orm.relationship(Route.__name__)
     ip_addresses: typing.List[IP] = orm.relationship(IP.__name__)
@@ -437,18 +449,3 @@ class Device(DeclarativeBase):
 
     def add_route(self, **kwargs):
         self.routes.append(Route(**kwargs))
-
-
-@orm_helper
-class VLAN(DeclarativeBase):
-    __tablename__ = TABLE_VLAN
-    device_ip = sqlalchemy.Column(
-        sqlalchemy.String,
-        sqlalchemy.ForeignKey(".".join((TABLE_DEVICE, KEY_DEVICE))),
-    )
-    vlan_id = sqlalchemy.Column(
-        sqlalchemy.Integer,
-        primary_key=True,
-    )
-    name = sqlalchemy.Column(sqlalchemy.String)
-    # vlan_interfaces = orm.relationship(VLANInterface.__name__)

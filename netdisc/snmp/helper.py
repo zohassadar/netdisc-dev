@@ -12,6 +12,7 @@ import pysnmp.smi.builder
 import pysnmp.smi.compiler
 import pysnmp.smi.rfc1902
 import pysnmp.smi.view
+import pysnmp.smi.error
 from netdisc.snmp import pymibs, snmpbase
 
 MIBSOURCE = str(pathlib.Path(pymibs.__file__).parent)
@@ -63,14 +64,15 @@ class MIBHelper:
             raise ValueError(f"{type(binding)} missing MIB attribute")
         try:
             self.mib_builder.loadModule(mib)
-        except Exception as exc:
+        except pysnmp.smi.error.MibLoadError as exc:
             # Iterate through all returned exceptions and report on the original
-            args, cause, exc = exc.cause
+            # Error is tuple[args, cause, exc]
+            cause = exc.cause[1]
             while True:
                 reason = cause
-                args, cause, exc = cause.cause
+                cause = cause.cause[1]
                 if cause is None:
-                    logging.error(f"Unable to load mib %s: %s", mib, reason)
+                    logging.error("Unable to load mib %s: %s", mib, reason)
                     break
         self._mibs_loaded.add(binding.MIB)
 
@@ -87,7 +89,8 @@ class MIBHelper:
 
     @get_value_from_oid.register
     def _(self, oid: tuple):
-        oid_raw, full_node, suffix = self.mib_view.getNodeNameByOid(oid)
+        # Return is tuple[oid_raw, full_node, suffix]
+        _, full_node, _ = self.mib_view.getNodeNameByOid(oid)
         return full_node[-1]
 
     @get_value_from_oid.register

@@ -14,8 +14,24 @@ class SNMPEngineAbstract(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def get(self, *paths) -> list[tuple]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def walk(self, *paths) -> list[tuple]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def object_paths_compile(
+        self,
+        binding: snmpbase.VarBindBase,
+        index: str | int = None,
+    ) -> list:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def object_get(
-        self, binding: snmpbase.VarBindBase
+        self, binding: snmpbase.VarBindBase, convert: bool
     ) -> list[snmpbase.VarBindBase] | snmpbase.VarBindBase:
         raise NotImplementedError
 
@@ -39,7 +55,8 @@ class SNMPEngineAbstract(abc.ABC):
     def set_cisco_vlans(self, vlans: list[int]) -> None:
         raise NotImplementedError
 
-    @abc.abstractstaticmethod
+    @staticmethod
+    @abc.abstractmethod
     def set_v3_auth_priv(
         snmpuser: str,
         authtype: str,
@@ -49,7 +66,8 @@ class SNMPEngineAbstract(abc.ABC):
     ) -> dict:
         raise NotImplementedError
 
-    @abc.abstractstaticmethod
+    @staticmethod
+    @abc.abstractmethod
     def set_v3_auth(
         snmpuser: str,
         authtype: str,
@@ -57,13 +75,15 @@ class SNMPEngineAbstract(abc.ABC):
     ) -> dict:
         raise NotImplementedError
 
-    @abc.abstractstaticmethod
+    @staticmethod
+    @abc.abstractmethod
     def set_v3(
         snmpuser: str,
     ) -> dict:
         raise NotImplementedError
 
-    @abc.abstractstaticmethod
+    @staticmethod
+    @abc.abstractmethod
     def set_v2(
         community: str,
     ) -> dict:
@@ -110,7 +130,7 @@ class SNMPEngine(SNMPEngineAbstract):
         assert issubclass(test_obj, snmpbase.WalkRequired)
 
         self.mib_helper.load_mib(binding)
-        object_paths = self._object_paths_compile(binding)
+        object_paths = self.object_paths_compile(binding)
 
         results = self.walk(*object_paths)
 
@@ -133,7 +153,7 @@ class SNMPEngine(SNMPEngineAbstract):
         assert issubclass(test_obj, snmpbase.ZeroIndex)
         self.mib_helper.load_mib(binding)
 
-        object_paths = self._object_paths_compile(binding, index=0)
+        object_paths = self.object_paths_compile(binding, index=0)
 
         results = self.get(*object_paths)
 
@@ -243,6 +263,9 @@ class SNMPEngine(SNMPEngineAbstract):
                 )
             case snmpuser, authtype, auth, privtype, priv, community:
                 raise ValueError(
-                    f"Invalid input: {snmpuser=}, {authtype=}, {auth=}, {privtype=}, {priv=}, {community=}"
+                    (
+                        f"Invalid input:"
+                        f" {snmpuser=}, {authtype=}, {auth=}, {privtype=}, {priv=}, {community=}"
+                    )
                 )
         self.setup()

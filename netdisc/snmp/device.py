@@ -1,13 +1,12 @@
+import dataclasses
+import logging
+import pprint
+
+from netdisc.base import abstract, device
+from netdisc.snmp import easyeng, engine, helper, pyeng, snmpbase
 from netdisc.tools import log_setup
 
 log_setup.set_logger(verbose=4)
-import abc
-import dataclasses
-import pprint
-
-from netdisc.base import device, abstract
-from netdisc.snmp import easyeng, engine, helper, pyeng, snmpbase
-import logging
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -53,11 +52,8 @@ LLDP_NEIGHBOR_MAP = {
     "sysinfo": ("lldpRemSysDesc", unfiltered),
 }
 
-import collections
-
 
 def apply_mapping(binding: snmpbase.VarBindBase, mapping: dict, result: dict) -> dict:
-    result
     for key, (snmp_key, filter_) in mapping.items():
         result[key] = filter_(getattr(binding, snmp_key))
     return result
@@ -69,10 +65,10 @@ class Generic(abstract.Accumulator):
 
     def __post_init__(self):
         self.device_ip = self.engine.host
-        self._OBJECT_CACHE = {}
+        self._object_cache = {}
 
     def object_cache_get(self, binding: snmpbase.VarBindBase):
-        return self._OBJECT_CACHE.setdefault(binding, self.engine.object_get(binding))
+        return self._object_cache.setdefault(binding, self.engine.object_get(binding))
 
     def device(self) -> device.Device:
         result = device.Device(device_ip=self.device_ip, **self.base_info())
@@ -102,7 +98,7 @@ class Generic(abstract.Accumulator):
     def interfaces(self):
         results = []
         ifmib_results = self.object_cache_get(snmpbase.IFMIB)
-        for ifindex, ifmib_result in ifmib_results.items():
+        for ifmib_result in ifmib_results.values():
             results.append(apply_mapping(ifmib_result, IFMIB_MAP, {}))
         return results
 
@@ -126,10 +122,12 @@ class Generic(abstract.Accumulator):
                 intf_idx
             ]
             interface = interfaces.interfaces_by_if_descr[lldp_port.lldpLocPortDesc]
-            result = apply_mapping(interface, LLDP_IF_MAP, {})
+            result = {}
+            result = apply_mapping(interface, LLDP_IF_MAP, result)
+            result = apply_mapping(neighbor, LLDP_NEIGHBOR_MAP, result)
             if mgmt_ip := lldp_mgmt_ips.ip_by_neigh_idx.get(idx):
                 result["ip"] = mgmt_ip
-            results.append(apply_mapping(neighbor, LLDP_NEIGHBOR_MAP, result))
+            results.append(result)
         return results
 
     def routes(self):

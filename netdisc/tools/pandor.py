@@ -281,7 +281,7 @@ class ExpressionParser:
     PARENTHESIZED_GROUP_REGEX = rf"^\s*(?P<{GROUP}>\((?:(?1)|[^()])*\))"
 
     """
-    If anything remains, the rest of the expression can be evaluated 
+    If anything remains, the rest of the expression can be evaluated
     as "and <remaining>" or "or <remaining>"
     """
     REMAINING_REGEX = (

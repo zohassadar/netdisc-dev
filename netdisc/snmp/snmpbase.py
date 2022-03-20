@@ -2,7 +2,6 @@ from __future__ import annotations
 import dataclasses
 import logging
 import enum
-import collections
 import typing
 import functools
 import re
@@ -11,7 +10,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class SNMPV2_MIB_SYS_SERVICES(enum.Flag):
+class SNMPV2SysServices(enum.Flag):
     PHYSICAL = 1
     DATALINK = 2
     NETWORK = 4
@@ -92,7 +91,7 @@ class SNMPv2(ZeroIndex):
     sysServices: str = dataclasses.field(
         metadata=xlate(
             key=MIBXlate.LOCAL_ENUM,
-            extras=SNMPV2_MIB_SYS_SERVICES,
+            extras=SNMPV2SysServices,
         ),
         default=None,
     )
@@ -233,8 +232,9 @@ class LLDPNeighIdx:
     neighbor: int = None
 
     def __post_init__(self):
-        if self.NEEDS_CONVERTED(str(self.number)):
-            number, lldp_if, neighbor = tuple(map(int, self.number.split(".")))
+        test_number = str(self.number)
+        if self.NEEDS_CONVERTED(test_number):
+            number, lldp_if, neighbor = tuple(map(int, test_number.split(".")))
             object.__setattr__(self, "number", number)
             object.__setattr__(self, "lldp_if", lldp_if)
             object.__setattr__(self, "neighbor", neighbor)
@@ -303,9 +303,11 @@ class LLDPRemMgmtIndex:
     def __post_init__(self):
         OID_PATTERN = re.compile(r"(?:\d+\.){5,}").search
         IPV4_TAG = "ipV4"
-        if isinstance(self.number, str) and OID_PATTERN(self.number):
+        test_number = str(self.number)
+        if OID_PATTERN(test_number):
             logger.debug("Index delivered as OID beginning with %s", self.number)
-            oid_split = self.number.split(".")
+
+            oid_split = test_number.split(".")
             if not oid_split[3:5] == ["1", "4"]:
                 logger.error("unknown address family: %s", oid_split[3:5])
                 return

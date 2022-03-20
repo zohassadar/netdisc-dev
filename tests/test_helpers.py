@@ -2,7 +2,7 @@ import unittest
 
 from netdisc.tools import helpers
 
-filter = lambda key: not key.startswith("a")
+filter_ = lambda key: not key.startswith("a")
 
 
 @helpers.add_kwargs_init()
@@ -11,7 +11,7 @@ class AddsKwargsEmptyCalled:
     b = 2
 
 
-@helpers.add_kwargs_init(filter=filter)
+@helpers.add_kwargs_init(filter_=filter_)
 class AddsKwargsFilter:
     a = 1
     b = 2
@@ -29,7 +29,7 @@ class AddsDictEmptyCalled:
     b = 2
 
 
-@helpers.add_kwargs_init(filter=filter)
+@helpers.add_kwargs_init(filter_=filter_)
 class AddsDictFilter:
     a = 1
     b = 2
