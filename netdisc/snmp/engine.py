@@ -123,11 +123,9 @@ class SNMPEngine(SNMPEngineAbstract):
             self.mib_helper.convert_binding_fields(result)
         return result
 
-    def object_walk(self, binding: snmpbase.WalkRequired):
-        test_obj = binding
-        assert isinstance(test_obj, type)
-        # The type hinter labels test_obj as "Never" after this is run
-        assert issubclass(test_obj, snmpbase.WalkRequired)
+    def object_walk(self, binding: type[snmpbase.WalkRequired]):
+        assert isinstance(binding, type)
+        assert issubclass(binding, snmpbase.WalkRequired)
 
         self.mib_helper.load_mib(binding)
         object_paths = self.object_paths_compile(binding)

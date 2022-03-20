@@ -66,3 +66,10 @@ REPONAME='base-project-example'
 ssh-keygen -f ~/.ssh/id_rsa_github_$REPONAME
 cat ~/.ssh/id_rsa_github_$REPONAME.pub 
 echo -e "Host github.com-$REPONAME\n  Hostname github.com\n  IdentityFile /home/rwd/.ssh/id_rsa_github_$REPONAME\n" >> ~/.ssh/config
+
+
+
+
+#Run precommit on everything:
+
+find . -name "*.py" -path "./netdisc/*" | xargs pre-commit run --files

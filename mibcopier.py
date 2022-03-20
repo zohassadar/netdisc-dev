@@ -10,7 +10,7 @@ find ~/netdisc/ndsnmp/ -name "*.py" \
  | xargs grep -hoP 'MIB = "\K[^"]*' \
  | uniq \
  | while read mib; \
- do python ~/netdisc/pymib.py -s ~/repos/netdisco-mibs/ -d ~/netdisc/netdisc/snmp/pymibs -r ~/netdisc/netdisc/snmp/asn1mibs $mib; 
+ do python ~/netdisc/pymib.py -s ~/repos/netdisco-mibs/ -d ~/netdisc/netdisc/snmp/pymibs -r ~/netdisc/netdisc/snmp/asn1mibs $mib;
  done
 """
 

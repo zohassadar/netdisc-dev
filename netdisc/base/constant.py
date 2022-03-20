@@ -31,8 +31,6 @@ KEYS_AUTH = (
 KEYS_DB = ("dbfile",)
 
 
-
-
 class Discovery(enum.IntFlag):
     INTERFACES = enum.auto()
     VRFS = enum.auto()

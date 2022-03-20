@@ -6,7 +6,9 @@ categorizer = Categorizer()
 
 # python -c 'import sys;import json; print ("\n".join(set([d.get("sysinfo", "") for d in json.loads(sys.stdin.read()) ])))' < raw_json_sysinfos.json > sysinfo_examples.txt
 
-sysinfo_examples = ["Examples of sysinfo responses go here"]
+sysinfo_examples = [
+    # "Examples of sysinfo responses go here",
+]
 
 
 @pytest.mark.parametrize(
