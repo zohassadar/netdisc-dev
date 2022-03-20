@@ -1,6 +1,7 @@
 import dataclasses
 import unittest
 
+import pytest
 from netdisc.tools import pandor
 
 
@@ -62,213 +63,120 @@ stupid_tree_2 = """
 """
 
 
-class TestStupidTrees(unittest.TestCase):
-    def test_stupid_tree_1(self):
-        attr_filter = pandor.AttrFilterForkFactory(stupid_tree_1)
-        self.assertIsInstance(attr_filter, pandor.MatchBoth)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
+variations = (
+    pytest.param(pandor.MatchBoth, stupid_tree_1, id="stupid tree 1"),
+    pytest.param(pandor.MatchEither, stupid_tree_2, id="stupid tree 2"),
+    pytest.param(
+        pandor.ContainsText, 'field      :     "123"', id="contains_with_spaces"
+    ),
+    pytest.param(pandor.ContainsText, 'field:"123"', id="contains_with_no_spaces"),
+    pytest.param(
+        pandor.NotContainsText, 'field   !:    "321"', id="not_contains_with_spaces"
+    ),
+    pytest.param(
+        pandor.NotContainsText, 'field!:"321"', id="not_contains_with_no_spaces"
+    ),
+    pytest.param(
+        pandor.IsExactly, 'ip_address     =    "10.20.30.40"', id="exact_with_spaces"
+    ),
+    pytest.param(
+        pandor.IsExactly, 'ip_address     =    "10.20.30.40"', id="exact_with_no_spaces"
+    ),
+    pytest.param(
+        pandor.NotIsExactly,
+        'ip_address    !=   "40.30.20.10"',
+        id="not_exact_with_spaces",
+    ),
+    pytest.param(
+        pandor.NotIsExactly, 'ip_address!="40.30.20.10"', id="not_exact_with_no_spaces"
+    ),
+    pytest.param(pandor.Regex, 'ip_address ~ "^10.20."', id="regex_with_spaces"),
+    pytest.param(pandor.Regex, 'ip_address~"30.40$"', id="regex_with_no_spaces"),
+    pytest.param(
+        pandor.NotRegex, 'ip_address !~ "^40.30."', id="not_regex_with_spaces"
+    ),
+    pytest.param(
+        pandor.NotRegex, 'ip_address!~".20.10$"', id="not_regex_with_no_spaces"
+    ),
+    pytest.param(
+        pandor.ContainsText, "field      :     '123'", id="contains_with_spaces_single"
+    ),
+    pytest.param(
+        pandor.ContainsText, "field:'123'", id="contains_with_no_spaces_single"
+    ),
+    pytest.param(
+        pandor.NotContainsText,
+        "field   !:    '321'",
+        id="not_contains_with_spaces_single",
+    ),
+    pytest.param(
+        pandor.NotContainsText, "field!:'321'", id="not_contains_with_no_spaces_single"
+    ),
+    pytest.param(
+        pandor.IsExactly,
+        "ip_address     =    '10.20.30.40'",
+        id="exact_with_spaces_single",
+    ),
+    pytest.param(
+        pandor.IsExactly,
+        "ip_address     =    '10.20.30.40'",
+        id="exact_with_no_spaces_single",
+    ),
+    pytest.param(
+        pandor.NotIsExactly,
+        "ip_address    !=   '40.30.20.10'",
+        id="not_exact_with_spaces_single",
+    ),
+    pytest.param(
+        pandor.NotIsExactly,
+        "ip_address!='40.30.20.10'",
+        id="not_exact_with_no_spaces_single",
+    ),
+    pytest.param(pandor.Regex, "ip_address ~ '^10.20.'", id="regex_with_spaces_single"),
+    pytest.param(pandor.Regex, "ip_address~'30.40$'", id="regex_with_no_spaces_single"),
+    pytest.param(
+        pandor.NotRegex, "ip_address !~ '^40.30.'", id="not_regex_with_spaces_single"
+    ),
+    pytest.param(
+        pandor.NotRegex, "ip_address!~'.20.10$'", id="not_regex_with_no_spaces_single"
+    ),
+    pytest.param(pandor.InNetwork, "ip_address in 10.0.0.0/8", id="in_network"),
+    pytest.param(pandor.InNetwork, "ip_address   in rfc1918", id="in_network_rfc1918"),
+    pytest.param(
+        pandor.NotInNetwork, "ip_address not in 40.0.0.0/8", id="not_in_network"
+    ),
+)
 
 
-class TestStrAttrFilters(unittest.TestCase):
-    def test_contains_with_spaces(self):
-        filter_ = 'field      :     "123"'
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.ContainsText)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_contains_with_no_spaces(self):
-        filter_ = 'field:"123"'
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.ContainsText)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_not_contains_with_spaces(self):
-        filter_ = 'field   !:    "321"'
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.NotContainsText)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_not_contains_with_no_spaces(self):
-        filter_ = 'field!:"321"'
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.NotContainsText)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_exact_with_spaces(self):
-        filter_ = 'ip_address     =    "10.20.30.40"'
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.IsExactly)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_exact_with_no_spaces(self):
-        filter_ = 'ip_address     =    "10.20.30.40"'
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.IsExactly)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_not_exact_with_spaces(self):
-        filter_ = 'ip_address    !=   "40.30.20.10"'
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.NotIsExactly)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_not_exact_with_no_spaces(self):
-        filter_ = 'ip_address!="40.30.20.10"'
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.NotIsExactly)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_regex_with_spaces(self):
-        filter_ = 'ip_address ~ "^10.20."'
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.Regex)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_regex_with_no_spaces(self):
-        filter_ = 'ip_address~"30.40$"'
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.Regex)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_not_regex_with_spaces(self):
-        filter_ = 'ip_address !~ "^40.30."'
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.NotRegex)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_not_regex_with_no_spaces(self):
-        filter_ = 'ip_address!~".20.10$"'
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.NotRegex)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_contains_with_spaces_single(self):
-        filter_ = "field      :     '123'"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.ContainsText)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_contains_with_no_spaces_single(self):
-        filter_ = "field:'123'"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.ContainsText)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_not_contains_with_spaces_single(self):
-        filter_ = "field   !:    '321'"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.NotContainsText)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_not_contains_with_no_spaces_single(self):
-        filter_ = "field!:'321'"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.NotContainsText)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_exact_with_spaces_single(self):
-        filter_ = "ip_address     =    '10.20.30.40'"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.IsExactly)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_exact_with_no_spaces_single(self):
-        filter_ = "ip_address     =    '10.20.30.40'"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.IsExactly)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_not_exact_with_spaces_single(self):
-        filter_ = "ip_address    !=   '40.30.20.10'"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.NotIsExactly)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_not_exact_with_no_spaces_single(self):
-        filter_ = "ip_address!='40.30.20.10'"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.NotIsExactly)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_regex_with_spaces_single(self):
-        filter_ = "ip_address ~ '^10.20.'"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.Regex)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_regex_with_no_spaces_single(self):
-        filter_ = "ip_address~'30.40$'"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.Regex)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_not_regex_with_spaces_single(self):
-        filter_ = "ip_address !~ '^40.30.'"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.NotRegex)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_not_regex_with_no_spaces_single(self):
-        filter_ = "ip_address!~'.20.10$'"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.NotRegex)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
+opposite_variations = (
+    pytest.param(
+        pandor.NotInNetwork,
+        "ip_address  not in rfc1918",
+        id="not_in_network_rfc1918",
+    ),
+)
 
 
-class TestNetworkAttrFilters(unittest.TestCase):
-    def test_in_network(self):
-        filter_ = "ip_address in 10.0.0.0/8"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.InNetwork)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
+@pytest.mark.parametrize(
+    ("expected", "pattern"),
+    variations,
+)
+def test_the_filters(expected, pattern):
+    attr_filter = pandor.AttrFilterForkFactory(pattern)
+    assert isinstance(attr_filter, expected)
+    assert attr_filter.filter(included)
+    assert not attr_filter.filter(excluded)
 
-    def test_in_network_rfc1918(self):
-        filter_ = "ip_address   in rfc1918"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.InNetwork)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
 
-    def test_not_in_network(self):
-        filter_ = "ip_address not in 40.0.0.0/8"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-        self.assertIsInstance(attr_filter, pandor.NotInNetwork)
-        self.assertTrue(attr_filter.filter(included))
-        self.assertFalse(attr_filter.filter(excluded))
-
-    def test_not_in_network_rfc1918(self):
-        filter_ = "   ip_address          not   in rfc1918"
-        attr_filter = pandor.AttrFilterForkFactory(filter_)
-
-        self.assertIsInstance(attr_filter, pandor.NotInNetwork)
-        self.assertTrue(attr_filter.filter(excluded))
-        self.assertFalse(attr_filter.filter(included))
+@pytest.mark.parametrize(
+    ("expected", "pattern"),
+    opposite_variations,
+)
+def test_the_filters_opposite(expected, pattern):
+    attr_filter = pandor.AttrFilterForkFactory(pattern)
+    assert isinstance(attr_filter, expected)
+    assert not attr_filter.filter(included)
+    assert attr_filter.filter(excluded)
 
 
 if "__main__" in __name__:
