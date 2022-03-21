@@ -30,7 +30,7 @@ stupid_tree_1 = """
 
     (field !~ '^(?=zyx 321)' and field : "included") )
 
-    and 
+    and
 
     (ip_address in rfc1918 and ip_address in 10.20.30.0/24)
 
@@ -52,7 +52,7 @@ stupid_tree_2 = """
 
     (field !~ '^(?=zyx 321)' and field : "included") )
 
-    and 
+    and
 
     (ip_address in rfc1918 and ip_address in 10.20.30.0/24)
 

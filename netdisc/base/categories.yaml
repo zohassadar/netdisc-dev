@@ -8,37 +8,37 @@ CISCO_XR:
   sysinfo: Cisco IOS XR Software
   running: show running-config
   netmiko: cisco_xr
-ARISTA_EOS: 
+ARISTA_EOS:
   sysinfo: Arista Networks
   running: show running-config
   startup: show startup-config
   netmiko: arista_eos
-CISCO_NXOS: 
+CISCO_NXOS:
   sysinfo: Cisco NX-OS
   running: show running-config
   startup: show startup-config
   netmiko: cisco_nxos
-CISCO_ASA: 
+CISCO_ASA:
   sysinfo: Cisco Adaptive Security Appliance
   running: show running-config
   startup: show startup-config
   netmiko: cisco_asa
-HP_COMWARE: 
+HP_COMWARE:
   sysinfo: HP Comware Platform Software
-HP_PROCURVE: 
+HP_PROCURVE:
   sysinfo: ProCurve
-F5_BIGIP: 
+F5_BIGIP:
   sysinfo: BIG-IP
   running: cat /config/bigip.conf
   netmiko: f5_linux
-PALOALTO_PANOS: 
+PALOALTO_PANOS:
   sysinfo: Palo Alto Networks
   netmiko: paloalto_panos
-CISCO_FXOS: 
+CISCO_FXOS:
   sysinfo: Cisco FX-OS
-AVAYA: 
+AVAYA:
   sysinfo: Avaya Inc
-DELL: 
+DELL:
   sysinfo: Dell EMC
 LINUX:
   sysinfo: ^Linux

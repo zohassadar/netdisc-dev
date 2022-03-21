@@ -12,7 +12,7 @@ sudo apt-get install python3.10-distutils
 
 
 # Possibly helpful
-sudo apt-get install python3.10-dev             
+sudo apt-get install python3.10-dev
 sudo apt-get install python3.10-venv
 
 
@@ -64,7 +64,7 @@ git push -u origin main
 #Add pubkey to github
 REPONAME='base-project-example'
 ssh-keygen -f ~/.ssh/id_rsa_github_$REPONAME
-cat ~/.ssh/id_rsa_github_$REPONAME.pub 
+cat ~/.ssh/id_rsa_github_$REPONAME.pub
 echo -e "Host github.com-$REPONAME\n  Hostname github.com\n  IdentityFile /home/rwd/.ssh/id_rsa_github_$REPONAME\n" >> ~/.ssh/config
 
 
