@@ -177,7 +177,3 @@ def test_the_filters_opposite(expected, pattern):
     assert isinstance(attr_filter, expected)
     assert not attr_filter.filter(included)
     assert attr_filter.filter(excluded)
-
-
-if "__main__" in __name__:
-    unittest.main()

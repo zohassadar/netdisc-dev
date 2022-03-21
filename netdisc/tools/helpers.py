@@ -31,14 +31,26 @@ def fake_orm_relationship(*args, **kwargs) -> NEED_LIST:
     return NEED_LIST
 
 
-def add_kwargs_init(*wrapped, filter_=None):
+def validate_wrapper_args(*wrapped, filter_=None) -> tuple[type | None, callable]:
     if wrapped and len(wrapped) > 1 or wrapped and filter_:
         raise ValueError(
-            "add_as_dict takes 1 positional argument or 1 keyword argument"
+            "add_kwargs_init takes 1 positional argument or 1 keyword argument"
         )
-
-    if not filter_:
+    if wrapped:
+        (wrapped,) = wrapped
+        print(type(wrapped))
+        assert isinstance(wrapped, type)
+    else:
+        wrapped = None
+    if filter_:
+        assert callable(filter_)
+    else:
         filter_ = lambda _: _
+    return wrapped, filter_
+
+
+def add_kwargs_init(*wrapped, filter_=None):
+    wrapped, filter_ = validate_wrapper_args(*wrapped, filter_=filter_)
 
     def new_init(self, **kwargs):
         for prop in dir(self):
@@ -55,43 +67,33 @@ def add_kwargs_init(*wrapped, filter_=None):
                 )
 
     def wrapper(cls):
+        assert isinstance(cls, type)
         setattr(cls, _INIT, new_init)
         return cls
 
     if wrapped:
-        return wrapper(wrapped[0])
+        return wrapper(wrapped)
     return wrapper
 
 
 def add_as_dict(*wrapped, filter_: typing.Callable = None):
-    if wrapped and len(wrapped) > 1 or wrapped and filter_:
-        raise ValueError(
-            "add_as_dict takes 1 positional argument or 1 keyword argument"
-        )
-
-    if not filter_:
-        filter_ = lambda _: _
+    wrapped, filter_ = validate_wrapper_args(*wrapped, filter_=filter_)
 
     def new_asdict(self):
         return {k: v for k, v in self.__dict__.items() if filter_(k)}
 
     def wrapper(cls):
+        assert isinstance(cls, type)
         setattr(cls, _ASDICT, new_asdict)
         return cls
 
     if wrapped:
-        return wrapper(wrapped[0])
+        return wrapper(wrapped)
     return wrapper
 
 
 def dict_repr_helper(*wrapped, filter_=None):
-    if wrapped and len(wrapped) > 1 or wrapped and filter_:
-        raise ValueError(
-            "add_as_dict takes 1 positional argument or 1 keyword argument"
-        )
-
-    if not filter_:
-        filter_ = lambda _: _
+    wrapped, filter_ = validate_wrapper_args(*wrapped, filter_=filter_)
 
     def new_repr(self):
         return (
@@ -111,7 +113,7 @@ def dict_repr_helper(*wrapped, filter_=None):
         return cls
 
     if wrapped:
-        return wrapper(wrapped[0])
+        return wrapper(wrapped)
 
     return wrapper
 
@@ -200,11 +202,13 @@ def debugger(level: int = logging.DEBUG, old_trim: bool = False) -> typing.Calla
                 )
                 return result
             except Exception as exc:
+                if message := str(exc):
+                    message = message.splitlines()[0]
                 logging.error(
                     "%s raised %s: %s",
                     wrapped.__name__,
                     repr(exc),
-                    str(exc).splitlines()[0],
+                    message,
                 )
                 raise exc
 
