@@ -5,20 +5,7 @@ import pathlib
 
 import regex
 import yaml
-
-
-class NetDiscCategoryError(ValueError):
-    ...
-
-
-CATEGORIES_FILE = "categories.yaml"
-CATEGORIES = pathlib.Path.joinpath(
-    pathlib.Path(__file__).parent, pathlib.Path(CATEGORIES_FILE)
-)
-
-
-if not CATEGORIES.exists():
-    raise NetDiscCategoryError(f"Unable to open file: {CATEGORIES}")
+import yaml.scanner
 
 
 class Category(enum.Enum):
@@ -47,6 +34,15 @@ class Category(enum.Enum):
     AVAYA_AURA = enum.auto()
 
 
+class NetDiscCategoryError(ValueError):
+    ...
+
+
+DEFAULT_CATEGORIES_PATH = pathlib.Path.joinpath(
+    pathlib.Path(__file__).parent, pathlib.Path("categories.yaml")
+)
+
+
 @dataclasses.dataclass(frozen=True)
 class DeviceCategory:
     """Device Category data loaded from yaml
@@ -66,21 +62,43 @@ class DeviceCategory:
         return regex.compile(self.sysinfo)
 
 
-dc = DeviceCategory(sysinfo="heh")
-
-
 @dataclasses.dataclass
 class Categorizer:
+    file: str | pathlib.Path = None
+    default = DEFAULT_CATEGORIES_PATH
+    overwrite: bool = False
+
     def __post_init__(self):
+
         self._categories: dict[str, dict] = {}
         self._loaded_categories: dict[str, DeviceCategory] = {}
-        with open(CATEGORIES) as file:
-            self._categories = yaml.safe_load(file)
-        for name, info in self._categories.items():
+        for file in (self.file, self.default):
+            if not file:
+                continue
+            try:
+                with open(DEFAULT_CATEGORIES_PATH) as f:
+                    contents = f.read()
+            except FileNotFoundError as exc:
+                raise NetDiscCategoryError(f"Invalid filename: {file}") from exc
+            try:
+                loaded = yaml.safe_load(contents)
+            except yaml.scanner.ScannerError as exc:
+                raise NetDiscCategoryError(f"Invalid YAML in file: {file}") from exc
+
+            self.load_category_info(loaded)
+            if self.overwrite:
+                break
+
+    def load_category_info(self, loaded_yaml):
+
+        for name, info in loaded_yaml.items():
             if name not in self.all_categories:
                 raise NetDiscCategoryError(f"Category {name} is not defined")
             category = self.flags_by_name[name]
-            self._loaded_categories[name] = DeviceCategory(category=category, **info)
+            device_category = self._loaded_categories.setdefault(
+                name, DeviceCategory(category=category)
+            )
+            vars(device_category).update(info)
 
     @functools.cached_property
     def all_categories(self) -> list[str]:
@@ -103,24 +121,27 @@ class Categorizer:
 
     def category_by_name(self, name: str) -> DeviceCategory:
         device_category = self._loaded_categories.get(name)
-        if device_category is None:
-            raise NetDiscCategoryError(
-                f"Category of {name} is not defined in {CATEGORIES}"
-            )
-        return device_category
+        if device_category:
+            return device_category
+        return self._loaded_categories.setdefault(
+            Category.UNKNOWN.name,
+            DeviceCategory(category=Category.UNKNOWN),
+        )
 
     def category_by_netmiko(self, netmiko_type: str) -> DeviceCategory:
         device_category = self.categories_by_netmiko.get(netmiko_type)
-        if device_category is None:
-            raise NetDiscCategoryError(
-                f"Category with netmiko type {netmiko_type} is not defined in {CATEGORIES}"
-            )
-        return device_category
+        if device_category:
+            return device_category
+        return self._loaded_categories.setdefault(
+            Category.UNKNOWN.name,
+            DeviceCategory(category=Category.UNKNOWN),
+        )
 
     def category_by_sysinfo(self, sysinfo: str) -> DeviceCategory:
         for category in self._loaded_categories.values():
             if category.sysinfo_compiled.search(sysinfo):
                 return category
-        raise NetDiscCategoryError(
-            f"Sysinfo provided doesn't match any configured category:\n{sysinfo}"
+        return self._loaded_categories.setdefault(
+            Category.UNKNOWN.name,
+            DeviceCategory(category=Category.UNKNOWN),
         )

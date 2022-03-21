@@ -12,6 +12,7 @@ _ASDICT = "_asdict"
 _ITER = "__iter__"
 _REPR = "__repr__"
 _INIT = "__init__"
+UPDATE = "update"
 
 
 def dummy(*args, **kwargs):
@@ -66,9 +67,16 @@ def add_kwargs_init(*wrapped, filter_=None):
                     f"{key} is an invalid keyword for {self.__class__.__name__}"
                 )
 
+    def update(self, **kwargs):
+        for key, value in kwargs.items():
+            if not hasattr(self, key):
+                raise ValueError(f"Invalid Key.  {key=} {value=}")
+            setattr(self, key, value)
+
     def wrapper(cls):
         assert isinstance(cls, type)
         setattr(cls, _INIT, new_init)
+        setattr(cls, UPDATE, update)
         return cls
 
     if wrapped:

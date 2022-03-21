@@ -16,22 +16,6 @@ import pytest
 from netdisc.base import Categorizer, Category
 
 
-categorizer = Categorizer()
-
-
-sysinfo_examples = [
-    # "Examples of sysinfo responses go here",
-]
-
-
-@pytest.mark.parametrize(
-    ("sysinfo"),
-    [pytest.param(sysinfo, id=sysinfo[:40]) for sysinfo in sysinfo_examples],
-)
-def test_example_sysinfos(sysinfo: str):
-    assert categorizer.category_by_sysinfo(sysinfo)
-
-
 @pytest.mark.parametrize(
     ("sysinfo", "expected"),
     (
@@ -88,4 +72,46 @@ def test_example_sysinfos(sysinfo: str):
     ),
 )
 def test_name_by_sysinfo(sysinfo: str, expected: Category):
+    categorizer = Categorizer()
     assert categorizer.category_by_sysinfo(sysinfo).category is expected
+
+
+@pytest.mark.parametrize(
+    ("name", "category"),
+    (
+        pytest.param("CISCO_IOS", Category.CISCO_IOS),
+        pytest.param("CISCO_FXOS", Category.CISCO_FXOS),
+        pytest.param("CISCO_ASA", Category.CISCO_ASA),
+        pytest.param("CISCO_ISE", Category.CISCO_ISE),
+        pytest.param("CISCO_NXOS", Category.CISCO_NXOS),
+        pytest.param("CISCO_WLC", Category.CISCO_WLC),
+        pytest.param("CISCO_XR", Category.CISCO_XR),
+        pytest.param("ARISTA_EOS", Category.ARISTA_EOS),
+        pytest.param("AVAYA", Category.AVAYA),
+        pytest.param("NETGEAR", Category.NETGEAR),
+        pytest.param("NIMBLE", Category.NIMBLE),
+    ),
+)
+def test_category_by_name(name, category):
+    categorizer = Categorizer()
+    assert categorizer.category_by_name(name).category is category
+
+
+@pytest.mark.parametrize(
+    ("netmiko", "category"),
+    (
+        pytest.param("cisco_ios", Category.CISCO_IOS),
+        pytest.param("cisco_asa", Category.CISCO_ASA),
+        pytest.param("cisco_nxos", Category.CISCO_NXOS),
+        pytest.param("cisco_xr", Category.CISCO_XR),
+        pytest.param("arista_eos", Category.ARISTA_EOS),
+    ),
+)
+def test_category_by_netmiko(netmiko, category):
+    categorizer = Categorizer()
+    assert categorizer.category_by_netmiko(netmiko).category is category
+
+
+def test_category_by_netmiko_invalid():
+    categorizer = Categorizer()
+    assert categorizer.category_by_netmiko(netmiko).category is category

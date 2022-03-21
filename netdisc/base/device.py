@@ -279,6 +279,21 @@ class ARP(DeclarativeBase):
 
 
 @orm_helper
+class VLAN(DeclarativeBase):
+    __tablename__ = TABLE_VLAN
+    device_ip = sqlalchemy.Column(
+        sqlalchemy.String,
+        sqlalchemy.ForeignKey(".".join((TABLE_DEVICE, KEY_DEVICE))),
+    )
+    vlan_id = sqlalchemy.Column(
+        sqlalchemy.Integer,
+        primary_key=True,
+    )
+    name = sqlalchemy.Column(sqlalchemy.String)
+    # vlan_interfaces = orm.relationship(VLANInterface.__name__)
+
+
+@orm_helper
 class Interface(DeclarativeBase):
     """Interface _summary_
 
@@ -318,7 +333,7 @@ class Interface(DeclarativeBase):
     speed = sqlalchemy.Column(sqlalchemy.String)
     duplex = sqlalchemy.Column(sqlalchemy.String)
     media = sqlalchemy.Column(sqlalchemy.String)
-    vlans = orm.relationship("VLAN")
+    # vlans = orm.relationship("VLAN")
     # vlan_interfaces = orm.relationship(VLANInterface.__name__)
     ip_addresses = orm.relationship("IP")
     ipv6_addresses = orm.relationship("IPv6")
@@ -342,21 +357,6 @@ class Interface(DeclarativeBase):
 #     trunk = sqlalchemy.Column(sqlalchemy.Boolean)
 #     voice = sqlalchemy.Column(sqlalchemy.Boolean)
 #     # macs = orm.relationship(MAC.__name__)
-
-
-@orm_helper
-class VLAN(DeclarativeBase):
-    __tablename__ = TABLE_VLAN
-    device_ip = sqlalchemy.Column(
-        sqlalchemy.String,
-        sqlalchemy.ForeignKey(".".join((TABLE_DEVICE, KEY_DEVICE))),
-    )
-    vlan_id = sqlalchemy.Column(
-        sqlalchemy.Integer,
-        primary_key=True,
-    )
-    name = sqlalchemy.Column(sqlalchemy.String)
-    # vlan_interfaces = orm.relationship(VLANInterface.__name__)
 
 
 # an example mapping using the base
