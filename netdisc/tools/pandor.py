@@ -431,12 +431,10 @@ def AttrFilterForkFactory(expression: str) -> AttrFilter:
             operator=parsed_expression.operator,
             str_value=parsed_expression.str_value,
         )
-    elif parsed_expression.group:
+    else:
         left = AttrFilterForkFactory(
             expression=parsed_expression.group,
         )
-    else:
-        raise ValueError(f"AttrFilterForkFactory error: {expression}")
 
     if not parsed_expression.remaining:
         return left
@@ -448,7 +446,7 @@ def AttrFilterForkFactory(expression: str) -> AttrFilter:
             left=left,
             right=right,
         )
-    elif parsed_expression.and_:
+    else:
         return MatchBoth(
             left=left,
             right=right,

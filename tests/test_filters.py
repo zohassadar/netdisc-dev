@@ -19,6 +19,11 @@ class Excluded:
     field: str = "zyx 321 this is the excluded field"
 
 
+@dataclasses.dataclass
+class ObjectWithIP:
+    ip_address: str
+
+
 included = Included()
 excluded = Excluded()
 
@@ -177,3 +182,106 @@ def test_the_filters_opposite(expected, pattern):
     assert isinstance(attr_filter, expected)
     assert not attr_filter.filter(included)
     assert attr_filter.filter(excluded)
+
+
+def test_invalid_filter_entirely():
+    with pytest.raises(ValueError):
+        pandor.AttrFilterForkFactory("asdf")
+
+
+def test_blank_filter():
+    assert isinstance(pandor.AttrFilterForkFactory(""), pandor.AllowAll)
+
+
+def test_whitespace_filter():
+    assert isinstance(pandor.AttrFilterForkFactory(" \t\n\r "), pandor.AllowAll)
+
+
+def test_invalid_filter_option():
+    with pytest.raises(ValueError):
+        pandor.StrAttrFilterFactory("test", None, "¿", "test")
+
+
+def test_invalid_filter_option_negate():
+    with pytest.raises(ValueError):
+        pandor.StrAttrFilterFactory("test", "!", "¿", "test")
+
+
+def test_invalid_filter_option_network():
+    with pytest.raises(ValueError):
+        pandor.NetworkAttrFilterFactory("ip", None, "ni", "192.168.0.0/24")
+
+
+def test_invalid_filter_option_negate_network():
+    with pytest.raises(ValueError):
+        pandor.NetworkAttrFilterFactory("ip", "not", "ni", "192.168.0.0/24")
+
+
+def test_plain_attr_filter():
+    filter_ = pandor.AttrFilter()
+    assert filter_.filter(True)
+    assert not filter_.filter(False)
+
+
+def test_allow_all():
+    filter_ = pandor.AllowAll()
+    assert filter_.filter(True)
+    assert filter_.filter(False)
+
+
+def test_discard_all():
+    filter_ = pandor.DiscardAll()
+    assert not filter_.filter(True)
+    assert not filter_.filter(False)
+
+
+def test_invalid_field():
+    filter_ = pandor.AttrFilter(attr="good")
+    with pytest.raises(ValueError):
+        filter_.filter(object())
+
+
+@pytest.mark.parametrize(
+    ("network", "ip_address"),
+    (
+        ("rfc1918", "10.0.0.0"),
+        ("rfc1918", "10.255.255.255"),
+        ("rfc1918", "172.16.0.0"),
+        ("rfc1918", "172.31.255.255"),
+        ("rfc1918", "192.168.0.0"),
+        ("rfc1918", "192.168.255.255"),
+        ("1.1.1.1/32", "1.1.1.1"),
+        ("0.0.0.0/0", "0.0.0.0"),
+        ("0.0.0.0/0", "255.255.255.255"),
+        ("0.0.0.0/1", "0.0.0.0"),
+        ("0.0.0.0/1", "127.255.255.255"),
+        ("128.0.0.0/1", "128.0.0.0"),
+        ("128.0.0.0/1", "255.255.255.255"),
+    ),
+)
+def test_good_ip_combinations(network, ip_address):
+    populated_filter = f"ip_address in {network}"
+    obj = ObjectWithIP(ip_address)
+    filter_ = pandor.AttrFilterForkFactory(populated_filter)
+    assert filter_.filter(obj)
+
+
+@pytest.mark.parametrize(
+    ("network", "ip_address"),
+    (
+        ("rfc1918", "19.0.0.0"),
+        ("rfc1918", "11.255.255.255"),
+        ("rfc1918", "172.15.0.0"),
+        ("rfc1918", "172.32.255.255"),
+        ("rfc1918", "192.167.255.255"),
+        ("rfc1918", "191.168.0.0"),
+        ("1.1.1.1/32", "1.1.1.2"),
+        ("0.0.0.0/1", "128.0.0.0"),
+        ("128.0.0.0/1", "127.255.255.255"),
+    ),
+)
+def test_bad_ip_combinations(network, ip_address):
+    populated_filter = f"ip_address in {network}"
+    obj = ObjectWithIP(ip_address)
+    filter_ = pandor.AttrFilterForkFactory(populated_filter)
+    assert not filter_.filter(obj)

@@ -20,7 +20,7 @@ fake_arg_kwargs = (
         pytest.param(
             ("multi\nline",),
             dict(a={"input": "contains\ndict"}, b={x: x for x in range(1000)}),
-            id="ArgKwarg",
+            id="ComplicatedArgKwarg",
         ),
     ),
 )
