@@ -6,10 +6,10 @@ import contextlib
 
 import yaml
 
-from netdisc import cli
+
 from netdisc.base import constant, defaults
-from netdisc.discover import authen
-from netdisc.tools import filter_, helpers, hostlist
+from netdisc.discover import authen, cli
+from netdisc.tools import helpers, hostlist
 
 CONFIG_KEY_INCLUDE_HOSTNAME = "include_hostname"
 CONFIG_KEY_INCLUDE_NETWORK = "include_network"

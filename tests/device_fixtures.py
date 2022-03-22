@@ -3,7 +3,7 @@ import pytest
 
 import pathlib
 
-DEVICES_PATH = pathlib.Path.joinpath(pathlib.Path(__file__).parent, "devices")
+DEVICES_PATH = pathlib.Path.joinpath(pathlib.Path(__file__).parent)
 
 # Build a small fake topology of three devices connected to each other
 

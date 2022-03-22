@@ -1,14 +1,12 @@
-from netdisc import config, logger
+from netdisc.tools import log_setup
 from netdisc.base import threaded, topology
-from netdisc.discover import looper, worker
+from netdisc.discover import looper, worker, config
 from netdisc.output import printed
 import logging
 
 args, auth_methods, hosts = config.get_netdisc_args()
 
-logger.set_logger(
-    verbose=args.verbose, log_file=args.log_file, log_file_depth=args.log_file_depth
-)
+log_setup(verbose=5)
 
 
 outputs = [printed.PrintedOutput]

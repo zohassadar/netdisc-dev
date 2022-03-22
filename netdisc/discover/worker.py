@@ -6,14 +6,14 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 from netdisc.base import constant
-from netdisc.discover import apidisc, snmpdisc, sshdisc
+import netdisc.snmp.discover
 from netdisc.tools import helpers
 
 DISCOVERY_MAP = dict()
-DISCOVERY_MAP[constant.Proto.API] = apidisc.api_discover
-DISCOVERY_MAP[constant.Proto.TELNET] = sshdisc.telnet_discover
-DISCOVERY_MAP[constant.Proto.SSH] = sshdisc.ssh_discover
-DISCOVERY_MAP[constant.Proto.SNMPv3] = snmpdisc.snmp_discover
+# DISCOVERY_MAP[constant.Proto.API] = apidisc.api_discover
+# DISCOVERY_MAP[constant.Proto.TELNET] = sshdisc.telnet_discover
+# DISCOVERY_MAP[constant.Proto.SSH] = sshdisc.ssh_discover
+DISCOVERY_MAP[constant.Proto.SNMPv3] = netdisc.snmp.discover.discover
 
 
 class TaskRequestT(typing.NamedTuple):

@@ -1,5 +1,4 @@
 import logging
-from decimal import DivisionByZero, DivisionImpossible
 from unittest import mock
 
 import pytest
@@ -261,13 +260,13 @@ def test_debugger_combinations_old_trimmer(args, kwargs):
 def test_debugger_combinations_exception(args, kwargs):
     @helpers.debugger(level=10, old_trim=True)
     def test(*args, **kwargs):
-        raise DivisionByZero("what")
+        raise RuntimeError("what")
 
     with (
         mock.patch("logging.error") as mock_error,
         mock.patch("logging.log") as mock_log,
     ):
-        with pytest.raises(DivisionByZero):
+        with pytest.raises(RuntimeError):
             test(*args, **kwargs)
         assert mock_log.called
         assert mock_error.called
@@ -277,13 +276,13 @@ def test_debugger_combinations_exception(args, kwargs):
 def test_debugger_combinations_exception_no_args(args, kwargs):
     @helpers.debugger(level=10, old_trim=True)
     def test(*args, **kwargs):
-        raise DivisionByZero
+        raise RuntimeError
 
     with (
         mock.patch("logging.error") as mock_error,
         mock.patch("logging.log") as mock_log,
     ):
-        with pytest.raises(DivisionByZero):
+        with pytest.raises(RuntimeError):
             test(*args, **kwargs)
         assert mock_log.called
         assert mock_error.called
@@ -319,12 +318,12 @@ def test_suppress_logs():
 
 def test_suppress_logs_with_error():
     with mock.patch("sys.stderr.write") as mocked_real_write:
-        with pytest.raises(DivisionImpossible):
+        with pytest.raises(RuntimeError):
             logging.basicConfig(level=logging.CRITICAL, force=True)
             with helpers.suppress_logs():
                 logger = logging.getLogger("test_logger")
                 logger.addHandler(logging.StreamHandler())
                 logger.critical("hi")
                 assert not mocked_real_write.called
-                raise DivisionImpossible
+                raise RuntimeError
         assert mocked_real_write.called

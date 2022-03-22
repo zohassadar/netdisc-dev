@@ -1,8 +1,7 @@
 import pytest
-from netdisc.base import device
 from netdisc.base.device import IP, Device, Interface, Neighbor, Route
 
-from device_fixtures import (
+from tests.device_fixtures import (
     device_1_interface_2,
     device_1_neighbor_3,
     device_1_loaded,
