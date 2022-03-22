@@ -1,7 +1,8 @@
 import logging
 import typing
-
+import functools
 from netdisc.tools import helpers
+
 
 ORM_BUILTINS = ("registry", "metadata", "mro")
 
@@ -275,7 +276,7 @@ class ARP(DeclarativeBase):
         sqlalchemy.String,
         primary_key=True,
     )
-    ip_address = sqlalchemy.Column(sqlalchemy.String)
+    address = sqlalchemy.Column(sqlalchemy.String)
 
 
 @orm_helper
@@ -332,7 +333,6 @@ class Interface(DeclarativeBase):
     media = sqlalchemy.Column(sqlalchemy.String)
     speed = sqlalchemy.Column(sqlalchemy.String)
     duplex = sqlalchemy.Column(sqlalchemy.String)
-    media = sqlalchemy.Column(sqlalchemy.String)
     # vlans = orm.relationship("VLAN")
     # vlan_interfaces = orm.relationship(VLANInterface.__name__)
     ip_addresses = orm.relationship("IP")
@@ -390,62 +390,161 @@ class Device(DeclarativeBase):
     macs: typing.List[MAC] = orm.relationship(MAC.__name__)
     arps: typing.List[ARP] = orm.relationship(ARP.__name__)
 
-    @helpers.debugger()
+    def _clear_cached_properties(self):
+        for name in dir(type(self)):
+            if isinstance(getattr(type(self), name), functools.cached_property):
+                print(f"Clearing self.{name}")
+                vars(self).pop(name, None)
+
+    @functools.cached_property
+    def interfaces_dict(self) -> dict[str, Interface]:
+        return {i.interface_name: i for i in self.interfaces}
+
+    def get_interface(self, interface_name) -> Interface | None:
+        return self.interfaces_dict.get(interface_name)
+
+    @functools.cached_property
+    def neighbors_dict(self) -> dict[str, Neighbor]:
+        return {(n.interface_name, n.hostname, n.interface): n for n in self.neighbors}
+
+    def get_neighbor(self, interface_name, hostname, interface) -> Neighbor | None:
+        return self.neighbors_dict.get((interface_name, hostname, interface))
+
+    @functools.cached_property
+    def routes_dict(self) -> dict[str, Route]:
+        return {(r.network_id, r.mask_len, r.vrf_name): r for r in self.routes}
+
+    def get_route(self, network_id, mask_len, vrf_name=None) -> Route | None:
+        return self.routes_dict.get((network_id, mask_len, vrf_name))
+
+    @functools.cached_property
+    def ip_addresses_dict(self) -> dict[str, IP]:
+        return {(i.address, i.vrf_name): i for i in self.ip_addresses}
+
+    def get_ip_address(self, address, vrf_name=None) -> IP | None:
+        return self.ip_addresses_dict.get((address, vrf_name))
+
+    @functools.cached_property
+    def ipv6_addresses_dict(self) -> dict[str, IPv6]:
+        return {(i.address, i.vrf_name): i for i in self.ipv6_addresses}
+
+    def get_ipv6_address(self, address, vrf_name=None) -> IPv6 | None:
+        return self.ipv6_addresses_dict.get((address, vrf_name))
+
+    @functools.cached_property
+    def vrfs_dict(self) -> dict[str, VRF]:
+        return {v.vrf_name: v for v in self.vrfs}
+
+    def get_vrf(self, vrf_name) -> VRF | None:
+        return self.ipv6_addresses_dict.get(vrf_name)
+
+    @functools.cached_property
+    def mac_addresses_dict(self) -> dict[str, MAC]:
+        return {(m.vlan_id, m.mac_address): m for m in self.macs}
+
+    def get_mac(self, vlan_id, mac_address) -> MAC | None:
+        return self.mac_addresses_dict.get((vlan_id, mac_address))
+
+    @functools.cached_property
+    def arp_entries_dict(self) -> dict[str, ARP]:
+        return {(a.address, a.vrf_name): a for a in self.arps}
+
+    def get_arp(self, address, vrf_name=None) -> ARP | None:
+        return self.arp_entries_dict.get((address, vrf_name))
+
+    @functools.cached_property
+    def vlans_dict(self) -> dict[int, VLAN]:
+        return {v.vlan_id: v for v in self.vlans}
+
+    def get_vlan(self, vlan_id) -> VLAN | None:
+        return self.vlans_dict.get(vlan_id)
+
     def dump(self):
         return {
-            TABLE_INTERFACE: [dict(o) for o in self.interfaces],
-            TABLE_NBR: [dict(o) for o in self.neighbors],
-            TABLE_VLAN: [dict(o) for o in self.vlans],
-            TABLE_ROUTE: [dict(o) for o in self.routes],
-            TABLE_IP: [dict(o) for o in self.ip_addresses],
-            TABLE_IPV6: [dict(o) for o in self.ipv6_addresses],
-            TABLE_MAC: [dict(o) for o in self.macs],
-            TABLE_ARP: [dict(o) for o in self.arps],
-            TABLE_VRF: [dict(o) for o in self.routes],
+            "interfaces": [dict(o) for o in self.interfaces],
+            "neighbors": [dict(o) for o in self.neighbors],
+            "vlans": [dict(o) for o in self.vlans],
+            "routes": [dict(o) for o in self.routes],
+            "ip_addresses": [dict(o) for o in self.ip_addresses],
+            "ipv6_addresses": [dict(o) for o in self.ipv6_addresses],
+            "macs": [dict(o) for o in self.macs],
+            "arps": [dict(o) for o in self.arps],
+            "vrfs": [dict(o) for o in self.routes],
         }
 
-    @helpers.debugger()
-    def load_partial(self, dumped):
-        for key, value in dumped.items():
-            if not isinstance(value, list):
-                setattr(self, key, value)
+    def load_partial(self, dumped: dict):
+        no_lists = {k: v for k, v in dumped.items() if not isinstance(v, list)}
+        self.update(no_lists)
 
-    @helpers.debugger()
-    def load(self, dumped):
+    def load_list(self, dumped, container, get_func, args, obj):
+        loaded_container = getattr(self, container, None)
+        if loaded_container is None:
+            raise ValueError(f"Device does not have list: {container}")
+        elif not isinstance(loaded_container, list):
+            raise ValueError(
+                f"Device field is not list: {container} {type(loaded_container)}"
+            )
+
+        getter = getattr(self, get_func)
+        for entry in dumped.get(container, []):
+            key = tuple(entry.get(a) for a in args)
+            if existing := getter(*key):
+                existing.update(entry)
+            else:
+                loaded_container.append(obj(**entry))
+
+    def load(self, dumped: dict):
         self.load_partial(dumped)
-        self.interfaces = [Interface(**o) for o in dumped.get(TABLE_INTERFACE, [])]
-        self.neighbors = [Neighbor(**o) for o in dumped.get(TABLE_NBR, [])]
-        self.vlans = [VLAN(**o) for o in dumped.get(TABLE_VLAN, [])]
-        self.vrfs = [VRF(**o) for o in dumped.get(TABLE_VRF, [])]
-        self.ip_addresses = [IP(**o) for o in dumped.get(TABLE_IP, [])]
-        self.ipv6_addresses = [IPv6(**o) for o in dumped.get(TABLE_IPV6, [])]
-        self.routes = [Route(**o) for o in dumped.get(TABLE_ROUTE, [])]
-        self.macs = [MAC(**o) for o in dumped.get(TABLE_MAC, [])]
-        self.arps = [ARP(**o) for o in dumped.get(TABLE_ARP, [])]
-
-    def add_interface(self, **kwargs):
-        self.interfaces.append(Interface(**kwargs))
-
-    def add_neighbor(self, **kwargs):
-        self.neighbors.append(Neighbor(**kwargs))
-
-    def add_ip_address(self, **kwargs):
-        self.ip_addresses.append(IP(**kwargs))
-
-    def add_ipv6_address(self, **kwargs):
-        self.ipv6_addresses.append(IPv6(**kwargs))
-
-    def add_vrf(self, **kwargs):
-        self.vrfs.append(VRF(**kwargs))
-
-    def add_vlan(self, **kwargs):
-        self.vlans.append(VLAN(**kwargs))
-
-    def add_mac(self, **kwargs):
-        self.macs.append(MAC(**kwargs))
-
-    def add_arp(self, **kwargs):
-        self.arps.append(ARP(**kwargs))
-
-    def add_route(self, **kwargs):
-        self.routes.append(Route(**kwargs))
+        setups = (
+            (
+                "interfaces",
+                "get_interface",
+                ("interface_name",),
+                Interface,
+            ),
+            (
+                "neighbors",
+                "get_neighbor",
+                ("interface_name", "hostname", "interface"),
+                Neighbor,
+            ),
+            (
+                "ip_addresses",
+                "get_ip_address",
+                ("address", "vrf_name"),
+                IP,
+            ),
+            (
+                "ipv6_addresses",
+                "get_ipv6_address",
+                ("address", "vrf_name"),
+                IP,
+            ),
+            (
+                "vrfs",
+                "get_vrf",
+                ("vrf_name",),
+                IP,
+            ),
+            (
+                "vlans",
+                "get_vlan",
+                ("vlan_id",),
+                VLAN,
+            ),
+            (
+                "macs",
+                "get_mac",
+                ("vlan_id", "mac_address"),
+                VLAN,
+            ),
+            (
+                "arps",
+                "get_arp",
+                ("address", "vrf_name"),
+                ARP,
+            ),
+        )
+        for setup in setups:
+            self.load_list(dumped, *setup)
+        self._clear_cached_properties()

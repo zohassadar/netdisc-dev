@@ -67,16 +67,9 @@ def add_kwargs_init(*wrapped, filter_=None):
                     f"{key} is an invalid keyword for {self.__class__.__name__}"
                 )
 
-    def update(self, **kwargs):
-        for key, value in kwargs.items():
-            if not hasattr(self, key):
-                raise ValueError(f"Invalid Key.  {key=} {value=}")
-            setattr(self, key, value)
-
     def wrapper(cls):
         assert isinstance(cls, type)
         setattr(cls, _INIT, new_init)
-        setattr(cls, UPDATE, update)
         return cls
 
     if wrapped:
@@ -111,6 +104,18 @@ def dict_repr_helper(*wrapped, filter_=None):
             + ")"
         )
 
+    def update(self, *args, **kwargs):
+        updates = kwargs
+        for arg in args:
+            if isinstance(arg, dict):
+                updates.update(arg)
+            else:
+                raise ValueError("Unknown type passed to update: {type(args[0])}")
+        for key, value in updates.items():
+            if not hasattr(self, key):
+                raise ValueError(f"Invalid Key.  {key=} {value=}")
+            setattr(self, key, value)
+
     def new_iter(self):
         return iter(self._asdict().items())
 
@@ -118,6 +123,7 @@ def dict_repr_helper(*wrapped, filter_=None):
         add_as_dict(filter_=filter_)(cls)
         setattr(cls, _ITER, new_iter)
         setattr(cls, _REPR, new_repr)
+        setattr(cls, UPDATE, update)
         return cls
 
     if wrapped:

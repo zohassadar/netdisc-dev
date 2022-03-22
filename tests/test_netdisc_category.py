@@ -114,4 +114,6 @@ def test_category_by_netmiko(netmiko, category):
 
 def test_category_by_netmiko_invalid():
     categorizer = Categorizer()
-    assert categorizer.category_by_netmiko(netmiko).category is category
+    assert (
+        categorizer.category_by_netmiko("asdflkajsdflkj").category is Category.UNKNOWN
+    )

@@ -1,10 +1,9 @@
-from decimal import DivisionByZero, DivisionImpossible
-from subprocess import call
-import pytest
-from unittest import mock
-from netdisc.tools import helpers
 import logging
+from decimal import DivisionByZero, DivisionImpossible
+from unittest import mock
 
+import pytest
+from netdisc.tools import helpers
 
 startswith_a = lambda x: x.startswith("a")
 
