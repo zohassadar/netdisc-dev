@@ -60,7 +60,7 @@ def add_kwargs_init(*wrapped, filter_=None):
                     setattr(self, prop, [])
         for key, value in kwargs.items():
             print(f"{key=} {value=}")
-            if hasattr(self, key) and filter_(key):
+            if hasattr(self, key) and filter_(key) and value is not None:
                 setattr(self, key, value)
             else:
                 raise AttributeError(
@@ -81,7 +81,7 @@ def add_as_dict(*wrapped, filter_: typing.Callable = None):
     wrapped, filter_ = validate_wrapper_args(*wrapped, filter_=filter_)
 
     def new_asdict(self):
-        return {k: v for k, v in self.__dict__.items() if filter_(k)}
+        return {k: v for k, v in self.__dict__.items() if filter_(k) and v is not None}
 
     def wrapper(cls):
         assert isinstance(cls, type)

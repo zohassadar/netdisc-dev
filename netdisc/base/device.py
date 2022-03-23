@@ -436,7 +436,7 @@ class Device(DeclarativeBase):
         return {v.vrf_name: v for v in self.vrfs}
 
     def get_vrf(self, vrf_name) -> VRF | None:
-        return self.ipv6_addresses_dict.get(vrf_name)
+        return self.vrfs_dict.get(vrf_name)
 
     @functools.cached_property
     def mac_addresses_dict(self) -> dict[str, MAC]:
@@ -460,7 +460,7 @@ class Device(DeclarativeBase):
         return self.vlans_dict.get(vlan_id)
 
     def dump(self):
-        return {
+        result = {
             "interfaces": [dict(o) for o in self.interfaces],
             "neighbors": [dict(o) for o in self.neighbors],
             "vlans": [dict(o) for o in self.vlans],
@@ -471,6 +471,8 @@ class Device(DeclarativeBase):
             "arps": [dict(o) for o in self.arps],
             "vrfs": [dict(o) for o in self.routes],
         }
+        result.update({k: v for k, v in dict(self).items() if not isinstance(v, list)})
+        return result
 
     def load_partial(self, dumped: dict):
         no_lists = {k: v for k, v in dumped.items() if not isinstance(v, list)}

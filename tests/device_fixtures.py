@@ -54,6 +54,11 @@ def device_1_interface_3():
 
 
 @pytest.fixture
+def device_1_interface_3_updated():
+    return open_n_yaml_safe_load(DEVICE_1)["device_1_interface_3_updated"]
+
+
+@pytest.fixture
 def device_2_interface_1():
     return open_n_yaml_safe_load(DEVICE_2)["device_2_interface_1"]
 
@@ -158,6 +163,24 @@ def device_1_loaded():
     interfaces = [
         open_n_yaml_safe_load(DEVICE_1)["device_1_interface_2"],
         open_n_yaml_safe_load(DEVICE_1)["device_1_interface_3"],
+    ]
+    neighbors = [
+        open_n_yaml_safe_load(DEVICE_1)["device_1_neighbor_2"],
+        open_n_yaml_safe_load(DEVICE_1)["device_1_neighbor_3"],
+    ]
+
+    device["interfaces"].extend(interfaces)
+    device["neighbors"].extend(neighbors)
+    return device
+
+
+@pytest.fixture
+def device_1_loaded_with_update():
+    device = open_n_yaml_safe_load(DEVICE_1)["device_1"]
+
+    interfaces = [
+        open_n_yaml_safe_load(DEVICE_1)["device_1_interface_2"],
+        open_n_yaml_safe_load(DEVICE_1)["device_1_interface_3_updated"],
     ]
     neighbors = [
         open_n_yaml_safe_load(DEVICE_1)["device_1_neighbor_2"],

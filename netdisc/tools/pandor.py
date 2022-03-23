@@ -350,7 +350,6 @@ class ExpressionParser:
         self.remaining = None
 
         _found = False
-        print("POST INIT!!")
         logger.debug("%s", self.GROUP_SEARCH.pattern)
         logger.debug("%s", self.STR_SINGLE_SEARCH.pattern)
         logger.debug("%s", self.STR_DOUBLE_SEARCH.pattern)
