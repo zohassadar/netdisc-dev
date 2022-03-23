@@ -1,0 +1,115 @@
+#grep -hoP '^class \K\w+|    \w+(?= = sql)' netdisc/base/device.py
+device_1:
+  device_ip: 192.168.42.101
+  hostname: TEST_DEVICE_1
+  full_hostname: TEST_DEVICE_1.domain.com
+  domain_name: domain.com
+  location: here
+  contact: me
+  model: abc123
+  sysinfo: Vendor Something Something
+  version: 7
+  failed: false
+  failure_reason:
+  authentication_failure:
+  failure_history:
+  interfaces: []  #Kept separately
+  neighbors: [] #Kept separately
+  routes:
+      -
+        device_ip: 192.168.42.101
+        vrf_name:
+        network_id: 0.0.0.0
+        mask_len: 0
+        next_hop: 192.168.42.1
+        protocol: static
+        admin_distance: 1
+        metric: 0
+  ip_addresses:
+      -
+        device_ip: 192.168.42.101
+        interface_name: Vlan100
+        vrf_name:
+        address: 192.168.42.101
+        mask_len: 25
+        is_secondary: false
+        is_virtual: false
+        is_loopback: false
+  ipv6_addresses: []  #Need to come back for below
+      # -
+      #   device_ip:
+      #   interface_name:
+      #   vrf_name:
+      #   address:
+      #   mask_len:
+      #   is_secondary:
+      #   is_virtual:
+      #   is_loopback:
+  vrfs: []
+      # -
+      #   device_ip: 192.168.42.101
+      #   vrf_name:
+      #   rd:
+  macs: []
+      # -
+      #   device_ip: 192.168.42.101
+      #   interface_name:
+      #   vlan_id:
+      #   mac_address:
+  arps: []
+      # -
+      #   device_ip: 192.168.42.101
+      #   interface_name:
+      #   vrf_name:
+      #   mac_address:
+      #   ip_address:
+  vlans: []
+      # -
+      #   device_ip: 192.168.42.101
+      #   vlan_id:
+      #   name:
+
+
+device_1_interface_2:
+  device_ip: 192.168.42.101
+  interface_name: Fa1/2
+  description: 1 to 2
+  media:
+  speed:
+  duplex:
+
+device_1_neighbor_2:
+  device_ip: 192.168.42.101
+  interface_name: Fa1/2
+  interface: Fa2/1
+  hostname: TEST_DEVICE_2
+  ip: 192.168.42.102
+  secondary_ip:
+  model: abc321
+  version: 6
+  sysinfo: Vendor Something Something
+
+device_1_interface_3:
+  device_ip: 192.168.42.101
+  interface_name: Fa1/3
+  description: 1 to 3
+  media:
+  speed:
+  duplex:
+
+device_1_interface_3_updated:
+  device_ip: 192.168.42.101
+  interface_name: Fa1/3
+  description: 1 to 3
+  media: aidem
+
+device_1_neighbor_3:
+  device_ip: 192.168.42.101
+  interface_name: Fa1/3
+  interface: Fa3/1
+  hostname: TEST_DEVICE_3
+  ip: 192.168.42.103
+  secondary_ip:
+  model: zyx987
+  version: 1000
+  sysinfo: Vendor Something Else

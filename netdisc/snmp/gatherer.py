@@ -1,18 +1,10 @@
 import dataclasses
+from netdisc.snmp import engine, snmpbase
+from netdisc.base import abstract
 import logging
-import pprint
 
-from netdisc.base import abstract, device
-from netdisc.snmp import easyeng, engine, helper, pyeng, snmpbase
-from netdisc.tools import log_setup
-
-log_setup.set_logger(verbose=4)
-
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-
-
-pp = lambda *a, **kw: pprint.pprint(*a, width=200, **kw)
 
 
 def unfiltered(value):
@@ -60,7 +52,7 @@ def apply_mapping(binding: snmpbase.VarBindBase, mapping: dict, result: dict) ->
 
 
 @dataclasses.dataclass
-class Generic(abstract.Accumulator):
+class SNMPGeneric(abstract.Gatherer):
     engine: engine.SNMPEngine
 
     def __post_init__(self):
@@ -70,39 +62,18 @@ class Generic(abstract.Accumulator):
     def object_cache_get(self, binding: snmpbase.VarBindBase):
         return self._object_cache.setdefault(binding, self.engine.object_get(binding))
 
-    def device(self) -> device.Device:
-        result = device.Device(device_ip=self.device_ip, **self.base_info())
-        logger.info(
-            "The length of devices interfaces and neighbors are: %s and %s",
-            len(result.interfaces),
-            len(result.neighbors),
-        )
-        result.interfaces.extend(
-            [
-                device.Interface(device_ip=self.device_ip, **result)
-                for result in self.interfaces()
-            ]
-        )
-
-        processed = []
-        for neighbor in self.neighbors():
-            neighbor = device.Neighbor(device_ip=self.device_ip, **neighbor)
-            processed.append(neighbor)
-        result.neighbors.extend(processed)
-        return result
-
-    def base_info(self):
+    def get_device(self):
         snmpv2_result = self.object_cache_get(snmpbase.SNMPv2)
         return apply_mapping(snmpv2_result, SNMPv2_MAP, {})
 
-    def interfaces(self):
+    def get_interfaces(self):
         results = []
         ifmib_results = self.object_cache_get(snmpbase.IFMIB)
         for ifmib_result in ifmib_results.values():
             results.append(apply_mapping(ifmib_result, IFMIB_MAP, {}))
         return results
 
-    def neighbors(self):
+    def get_neighbors(self):
         neighbor_ports: snmpbase.LLDPInterfacesDict = self.object_cache_get(
             snmpbase.LLDPInterface
         )
@@ -113,7 +84,6 @@ class Generic(abstract.Accumulator):
         lldp_mgmt_ips: snmpbase.LLDPRemMgmtDict = self.object_cache_get(
             snmpbase.LLDPRemMgmtIntf
         )
-        pp(lldp_mgmt_ips)
         results = []
         for idx, neighbor in neighbors.items():
             logger.debug("Processing neighbor index: %s", idx)
@@ -130,43 +100,23 @@ class Generic(abstract.Accumulator):
             results.append(result)
         return results
 
-    def routes(self):
+    def get_routes(self):
         pass
 
-    def vlans(self):
+    def get_vlans(self):
         pass
 
-    def vrfs(self):
+    def get_vrfs(self):
         pass
 
-    def macs(self):
+    def get_macs(self):
         pass
 
-    def arps(self):
+    def get_arps(self):
         pass
 
+    def get_ip_addresses(self) -> list[dict[str, str | int | bool]]:
+        return super().get_ip_addresses()
 
-class UnknownDevice(abstract.Accumulator):
-    ...
-
-
-eh = helper.MIBHelper(flags=snmpbase.MIBXlate.NONE)
-
-easy = easyeng.EasySNMPEngine(
-    mib_helper=eh,
-    host="192.168.42.254",
-    community="wordup",
-)
-
-ph = helper.MIBHelper(flags=snmpbase.MIBXlate.NONE)
-
-py2 = pyeng.PySNMPEngine(
-    mib_helper=ph,
-    host="192.168.42.254",
-    community="wordup",
-)
-
-g = Generic(py2)
-d = g.device()
-
-print(len(d.neighbors))
+    def get_ipv6_addresses(self) -> list[dict[str, str | int | bool]]:
+        return super().get_ipv6_addresses()

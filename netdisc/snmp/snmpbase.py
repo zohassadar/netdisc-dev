@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 import dataclasses
-import logging
 import enum
-import typing
 import functools
+import logging
 import re
+import typing
+
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

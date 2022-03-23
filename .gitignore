@@ -17,6 +17,7 @@
 !pyproject.toml
 
 *.yaml
+!tests/device_*.yaml
 !netdisc/base/categories.yaml
 !.github/workflows/tests.yaml
 

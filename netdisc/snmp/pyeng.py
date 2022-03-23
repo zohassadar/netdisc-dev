@@ -22,6 +22,13 @@ import pysnmp.smi.rfc1902
 import pysnmp.smi.view
 
 from netdisc.snmp import snmpbase, engine
+from netdisc.tools import helpers
+
+
+DUMP_MODE = True
+PYENG_DEBUG_CALLS = "/home/rwd/netdisc/tests/pyeng_saved_calls.yaml"
+
+debug_dumper = helpers.SNMPEngDebugDumper(DUMP_MODE, PYENG_DEBUG_CALLS)
 
 
 logger = logging.getLogger(__name__)
@@ -152,12 +159,14 @@ class PySNMPEngine(engine.SNMPEngine):
     ) -> list[tuple[typing.Any, str, typing.Any]]:
         logger.debug("PyEng get method invoked: %s", paths)
         error_ind, error_status, error_index, var_binds = self._get(*paths)
-        return self._process_result(
+        result = self._process_result(
             error_ind,
             error_status,
             error_index,
             var_binds,
         )
+        debug_dumper.dump(self.host, result, *paths)
+        return result
 
     def _walk(self, *paths):
         logger.debug("PyEng _walk method invoked: %s", paths)
@@ -195,6 +204,7 @@ class PySNMPEngine(engine.SNMPEngine):
                     var_binds,
                 )
             )
+        debug_dumper.dump(self.host, results, *paths)
         return results
 
     def _get_var_bindings(self, *paths) -> list:

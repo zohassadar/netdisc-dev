@@ -1,9 +1,12 @@
+import dataclasses
 import functools
 import logging
 import pprint
 import sys
 import time
 import typing
+
+import yaml
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -114,7 +117,8 @@ def dict_repr_helper(*wrapped, filter_=None):
         for key, value in updates.items():
             if not hasattr(self, key):
                 raise ValueError(f"Invalid Key.  {key=} {value=}")
-            setattr(self, key, value)
+            if value is not None:
+                setattr(self, key, value)
 
     def new_iter(self):
         return iter(self._asdict().items())
@@ -238,3 +242,44 @@ def debug_shorten(obj: typing.Any, length: int = 40):
     if original_length > length:
         suffix = "..."
     return f"{obj_repr[:length]}{suffix}"
+
+
+@dataclasses.dataclass
+class SNMPEngDebugDumper:
+    """Used to store data retrieved from `get` & `walk` functions of the snmp engine
+
+    args must be tuple-able
+
+    """
+
+    enabled: bool
+    file: str
+
+    def dump(self, ip, result, *args):
+        if not self.enabled:
+            return
+        contents = None
+        try:
+            with open(self.file) as f:
+                contents = yaml.load(f, Loader=yaml.Loader)
+        except FileNotFoundError:
+            pass
+        if not contents:
+            contents = {}
+
+        contents.setdefault(ip, {})[args] = result
+        with open(self.file, "w+") as f:
+            print(yaml.dump(contents), file=f)
+
+
+@dataclasses.dataclass
+class SNMPEngDumpedDebug:
+    file: str
+    ip: str
+
+    def __post_init__(self):
+        with open(self.file) as f:
+            self._loaded = yaml.load(f, Loader=yaml.Loader).get(self.ip, {})
+
+    def retrieve(self, *keys):
+        return self._loaded.get(keys)

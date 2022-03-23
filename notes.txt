@@ -62,10 +62,10 @@ git push -u origin main
 
 
 #Add pubkey to github
-REPONAME='base-project-example'
+REPONAME='netdisc'
 ssh-keygen -f ~/.ssh/id_rsa_github_$REPONAME
 cat ~/.ssh/id_rsa_github_$REPONAME.pub
-echo -e "Host github.com-$REPONAME\n  Hostname github.com\n  IdentityFile /home/rwd/.ssh/id_rsa_github_$REPONAME\n" >> ~/.ssh/config
+echo -e "Host github.com-$REPONAME\n  Hostname github.com\n  IdentityFile /home/$USER/.ssh/id_rsa_github_$REPONAME\n" >> ~/.ssh/config
 
 
 

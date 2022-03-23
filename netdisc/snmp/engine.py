@@ -2,7 +2,7 @@ import abc
 import dataclasses
 import logging
 
-from netdisc.snmp import helper, snmpbase
+from netdisc.snmp import mibhelp, snmpbase
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -92,7 +92,7 @@ class SNMPEngineAbstract(abc.ABC):
 
 @dataclasses.dataclass
 class SNMPEngine(SNMPEngineAbstract):
-    mib_helper: helper.MIBHelper = None
+    mib_helper: mibhelp.MIBHelper = None
     host: str = (None,)
     port: int = 161
     community: str = None

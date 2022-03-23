@@ -67,13 +67,17 @@ class MIBHelper:
         except pysnmp.smi.error.MibLoadError as exc:
             # Iterate through all returned exceptions and report on the original
             # Error is tuple[args, cause, exc]
+
             cause = exc.cause[1]
             while True:
                 reason = cause
-                cause = cause.cause[1]
+                if reason is not pysnmp.smi.error.MibLoadError:
+                    break
+                cause = reason.cause[1]
                 if cause is None:
                     logging.error("Unable to load mib %s: %s", mib, reason)
                     break
+            logger.error(cause)
         self._mibs_loaded.add(binding.MIB)
 
     def load_lookup_mibs(self, lookup_mibs: tuple):

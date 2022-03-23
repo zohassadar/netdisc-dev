@@ -1,0 +1,110 @@
+#grep -hoP '^class \K\w+|    \w+(?= = sql)' netdisc/base/device.py
+device_2:
+  device_ip: 192.168.42.102
+  hostname: TEST_DEVICE_2
+  full_hostname: TEST_DEVICE_2.domain.com
+  domain_name: domain.com
+  location: here
+  contact: me
+  model: abc321
+  sysinfo: Vendor Something Something
+  version: 6
+  failed: false
+  failure_reason:
+  authentication_failure:
+  failure_history:
+  interfaces: []  #Kept separately
+  neighbors: [] #Kept separately
+  routes:
+      -
+        device_ip: 192.168.42.102
+        vrf_name:
+        network_id: 0.0.0.0
+        mask_len: 0
+        next_hop: 192.168.42.1
+        protocol: static
+        admin_distance: 1
+        metric: 0
+  ip_addresses:
+      -
+        device_ip: 192.168.42.102
+        interface_name: Vlan100
+        vrf_name:
+        address: 192.168.42.102
+        mask_len: 25
+        is_secondary: false
+        is_virtual: false
+        is_loopback: false
+  ipv6_addresses: []
+      # -
+      #   device_ip:
+      #   interface_name:
+      #   vrf_name:
+      #   address:
+      #   mask_len:
+      #   is_secondary:
+      #   is_virtual:
+      #   is_loopback:
+  vrfs: []
+      # -
+      #   device_ip: 192.168.42.102
+      #   vrf_name:
+      #   rd:
+  macs: []
+      # -
+      #   device_ip: 192.168.42.102
+      #   interface_name:
+      #   vlan_id:
+      #   mac_address:
+  arps: []
+      # -
+      #   device_ip: 192.168.42.102
+      #   interface_name:
+      #   vrf_name:
+      #   mac_address:
+      #   ip_address:
+  vlans: []
+      # -
+      #   device_ip: 192.168.42.102
+      #   vlan_id:
+      #   name:
+
+
+device_2_neighbor_1:
+  device_ip: 192.168.42.102
+  interface_name: Fa2/1
+  interface: Fa1/2
+  hostname: TEST_DEVICE_1
+  ip: 192.168.42.101
+  secondary_ip:
+  model: abc123
+  version: 7
+  sysinfo: Vendor Something Something
+
+device_2_neighbor_3:
+  device_ip: 192.168.42.102
+  interface_name: Fa2/3
+  interface: Fa3/2
+  hostname: TEST_DEVICE_3
+  ip: 192.168.42.103
+  secondary_ip:
+  model: zyx987
+  version: 1000
+  sysinfo: Vendor Something Else
+
+device_2_interface_1:
+  device_ip: 192.168.42.102
+  interface_name: Fa2/3
+  description: 2 to 3
+  media:
+  speed:
+  duplex:
+
+
+device_2_interface_3:
+  device_ip: 192.168.42.102
+  interface_name: Fa2/1
+  description: 2 to 1
+  media:
+  speed:
+  duplex:

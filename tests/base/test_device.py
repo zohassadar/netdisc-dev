@@ -64,13 +64,38 @@ def explore_dict(this_dict, that_dict):
             print(f"{d=} {e=}")
 
 
-def test_dumping_device(Device, device_1_loaded):
+def list_dict_compare(list1, list2):
+    for e1, e2 in zip(list1, list2):
+        if not filter_nones(dict(e1)) == filter_nones(dict(e2)):
+            return False
+    return True
+
+
+@pytest.mark.parametrize(
+    ("device_data"),
+    (
+        pytest.param("device_1_loaded"),
+        pytest.param("device_2_loaded"),
+        pytest.param("device_3_loaded"),
+        pytest.param("device_1_loaded_with_update"),
+    ),
+)
+def test_dumping_device(device_data, request, Device):
+    device_data = request.getfixturevalue(device_data)
     first_device = Device()
-    first_device.load(device_1_loaded)
+    first_device.load(device_data)
     dumped = first_device.dump()
     second_device = Device()
     second_device.load(dumped)
-    assert dict(second_device) == dict(first_device)
+    assert list_dict_compare(first_device.arps, second_device.arps)
+    assert list_dict_compare(first_device.macs, second_device.macs)
+    assert list_dict_compare(first_device.routes, second_device.routes)
+    assert list_dict_compare(first_device.vrfs, second_device.vrfs)
+    assert list_dict_compare(first_device.vlans, second_device.vlans)
+    assert list_dict_compare(first_device.ip_addresses, second_device.ip_addresses)
+    assert list_dict_compare(first_device.ipv6_addresses, second_device.ipv6_addresses)
+    assert list_dict_compare(first_device.interfaces, second_device.interfaces)
+    assert list_dict_compare(first_device.neighbors, second_device.neighbors)
 
 
 def test_device_interface(Device, device_1_loaded, device_1_interface_2):

@@ -5,40 +5,46 @@ import abc
 from netdisc.base import device
 
 
-class Accumulator(abc.ABC):
-    """Collect information and provide a device"""
+class Gatherer(abc.ABC):
+    @abc.abstractmethod
+    def get_device(self) -> dict[str, str | int | bool]:
+        ...
 
     @abc.abstractmethod
-    def base_info(self):
-        raise NotImplementedError
+    def get_interfaces(self) -> list[dict[str, str | int | bool]]:
+        ...
 
     @abc.abstractmethod
-    def interfaces(self):
-        raise NotImplementedError
+    def get_neighbors(self) -> list[dict[str, str | int | bool]]:
+        ...
 
     @abc.abstractmethod
-    def neighbors(self):
-        raise NotImplementedError
+    def get_ip_addresses(self) -> list[dict[str, str | int | bool]]:
+        ...
 
     @abc.abstractmethod
-    def routes(self):
-        raise NotImplementedError
+    def get_ipv6_addresses(self) -> list[dict[str, str | int | bool]]:
+        ...
 
     @abc.abstractmethod
-    def vlans(self):
-        raise NotImplementedError
+    def get_routes(self) -> list[dict[str, str | int | bool]]:
+        ...
 
     @abc.abstractmethod
-    def vrfs(self):
-        raise NotImplementedError
+    def get_macs(self) -> list[dict[str, str | int | bool]]:
+        ...
 
     @abc.abstractmethod
-    def macs(self):
-        raise NotImplementedError
+    def get_arps(self) -> list[dict[str, str | int | bool]]:
+        ...
 
     @abc.abstractmethod
-    def arps(self):
-        raise NotImplementedError
+    def get_vlans(self) -> list[dict[str, str | int | bool]]:
+        ...
+
+    @abc.abstractmethod
+    def get_vrfs(self) -> list[dict[str, str | int | bool]]:
+        ...
 
 
 class TopologyBase(abc.ABC):
