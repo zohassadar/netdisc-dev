@@ -2,10 +2,15 @@ from netdisc.snmp import pyeng, mibhelp, snmpbase, gatherer
 from netdisc.tools import helpers
 import pytest
 import unittest.mock
-
+import pathlib
 
 # test_parameterized_fixture.py
 import pytest
+
+
+check_debug_info = pytest.mark.skipif(
+    not pathlib.Path(pyeng.PYENG_DEBUG_CALLS).exists, reason="Debug Info Unavailable"
+)
 
 
 def get_fake_pyeng(mib_helper, ip_address):
@@ -34,6 +39,7 @@ def fake_pyeng(fake_pyeng_arg, mib_helper_no_flags):
     return get_fake_pyeng(mib_helper_no_flags, fake_pyeng_arg)
 
 
+@check_debug_info
 @pytest.mark.parametrize(
     ("fake_pyeng_arg"),
     ("192.168.42.254",),
@@ -42,6 +48,7 @@ def test_pyeng(fake_pyeng):
     gatherer.SNMPGeneric(fake_pyeng)
 
 
+@check_debug_info
 @pytest.mark.parametrize(
     ("fake_pyeng_arg"),
     ("192.168.42.254",),

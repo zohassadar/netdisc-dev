@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 import typing
 import functools
@@ -333,10 +334,6 @@ class Interface(DeclarativeBase):
     media = sqlalchemy.Column(sqlalchemy.String)
     speed = sqlalchemy.Column(sqlalchemy.String)
     duplex = sqlalchemy.Column(sqlalchemy.String)
-    # vlans = orm.relationship("VLAN")
-    # vlan_interfaces = orm.relationship(VLANInterface.__name__)
-    ip_addresses = orm.relationship("IP")
-    ipv6_addresses = orm.relationship("IPv6")
 
 
 # @orm_helper

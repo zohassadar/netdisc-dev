@@ -58,17 +58,19 @@ def add_kwargs_init(*wrapped, filter_=None):
 
     def new_init(self, **kwargs):
         for prop in dir(self):
-            if not prop.startswith("_"):
-                if getattr(self, prop) is NEED_LIST:
-                    setattr(self, prop, [])
+            if isinstance(getattr(type(self), prop, None), functools.cached_property):
+                continue
+            if prop.startswith("_"):
+                continue
+            if getattr(self, prop) is NEED_LIST:
+                setattr(self, prop, [])
         for key, value in kwargs.items():
-            print(f"{key=} {value=}")
-            if hasattr(self, key) and filter_(key) and value is not None:
-                setattr(self, key, value)
-            else:
+            if not (hasattr(self, key) and filter_(key)):
                 raise AttributeError(
                     f"{key} is an invalid keyword for {self.__class__.__name__}"
                 )
+            if value is not None:
+                setattr(self, key, value)
 
     def wrapper(cls):
         assert isinstance(cls, type)

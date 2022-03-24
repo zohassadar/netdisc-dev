@@ -13,7 +13,7 @@ DISCOVERY_MAP = dict()
 # DISCOVERY_MAP[constant.Proto.API] = apidisc.api_discover
 # DISCOVERY_MAP[constant.Proto.TELNET] = sshdisc.telnet_discover
 # DISCOVERY_MAP[constant.Proto.SSH] = sshdisc.ssh_discover
-DISCOVERY_MAP[constant.Proto.SNMPv3] = netdisc.snmp.discover.discover
+DISCOVERY_MAP[constant.Proto.SNMPv3] = netdisc.snmp.discover.snmp_discover
 
 
 class TaskRequest(
@@ -73,21 +73,6 @@ class TaskResponse(collections.namedtuple("TaskResponse", "ip, dumped")):
         except TypeError:
             raise ValueError("dumped_device must be JSON serializable")
         return super().__new__(cls, ip, dumped)
-
-
-def get_device_dump(gatherer: abstract.Gatherer) -> device.Device:
-    result = device.Device()
-    result.update(gatherer.get_device())
-    result.interfaces.extend(gatherer.get_interfaces())
-    result.neighbors.extend(gatherer.get_neighbors())
-    result.ip_addresses.extend(gatherer.get_ip_addresses())
-    result.ipv6_addresses.extend(gatherer.get_ipv6_addresses())
-    result.routes.extend(gatherer.get_routes())
-    result.macs.extend(gatherer.get_macs())
-    result.arps.extend(gatherer.get_arps())
-    result.vlans.extend(gatherer.get_vlans())
-    result.vrfs.extend(gatherer.get_vrfs())
-    return result.dump()
 
 
 @helpers.debugger(logging.CRITICAL)
