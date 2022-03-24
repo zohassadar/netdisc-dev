@@ -1,20 +1,5 @@
 import argparse
-import ipaddress
-import logging
-import re
-import socket
-import sys
-import functools
-from netdisc.tools import helpers
 
-
-@helpers.debugger(logging.CRITICAL)
-def exit(*args, **kwargs):
-    print("some asshole called exit")
-
-
-_exit = sys.exit
-sys.exit = exit
 
 HELP_MESSAGE = """This is where the help message goes"""
 
