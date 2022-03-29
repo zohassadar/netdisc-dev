@@ -9,9 +9,11 @@ pip install easysnmp
 import dataclasses
 import logging
 import typing
+import os
 import easysnmp
 import easysnmp.exceptions
 
+from tools import helpers
 from netdisc.snmp import engine
 
 logger = logging.getLogger(__name__)
@@ -20,6 +22,10 @@ logger.addHandler(logging.NullHandler())
 
 EASY_AUTHS = ("MD5", "SHA")
 EASY_PRIVS = ("AES", "DES", "3DES")
+
+
+EASY_DEBUG_OUTPUT = os.getenv("EASY_DEBUG_OUTPUT")
+debug_dumper = helpers.SNMPEngDebugDumper(EASY_DEBUG_OUTPUT)
 
 
 class EasySNMPEngine(engine.SNMPEngine):
@@ -121,6 +127,7 @@ class EasySNMPEngine(engine.SNMPEngine):
 
         results = self._get(*paths)
         logger.debug("%s received %s results", type(self), len(results))
+        debug_dumper.dump(self.host, results, *paths)
         processed = self._process_results(results)
         logger.debug(
             "%s received %s results after processing", type(self), len(processed)
@@ -147,6 +154,7 @@ class EasySNMPEngine(engine.SNMPEngine):
     ) -> list[tuple[typing.Any, str, typing.Any]]:
         results = self._walk(*paths)
         logger.debug("%s received %s results", type(self), len(results))
+        debug_dumper.dump(self.host, results, *paths)
         processed = self._process_results(results)
         logger.debug(
             "%s received %s results after processing", type(self), len(processed)

@@ -3,11 +3,10 @@ import pprint
 
 from netdisc.tools import log_setup
 
-
 pprinter = pprint.PrettyPrinter()
 pp = pprinter.pprint
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(prog='netdisc.snmp')
 parser.add_argument(
     "-c",
     "--community",

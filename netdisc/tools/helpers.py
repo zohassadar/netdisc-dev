@@ -5,6 +5,7 @@ import pprint
 import sys
 import time
 import typing
+import pathlib
 
 import yaml
 
@@ -254,11 +255,16 @@ class SNMPEngDebugDumper:
 
     """
 
-    enabled: bool
     file: str
 
+    def __post_init__(self):
+        self._enabled = False
+        pathlib.Path(self.file)
+        if self.file:
+            self._enabled = True
+
     def dump(self, ip, result, *args):
-        if not self.enabled:
+        if not self._enabled:
             return
         contents = None
         try:

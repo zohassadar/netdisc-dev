@@ -1,16 +1,13 @@
 """
 To add more mibs:
-
-MIB_DIR='/home/rwd/mibs.thola.io'
-
-mibdump.py --mib-source $MIB_DIR --destination-directory=~/netdisc/ndsnmp/mibs CISCO-PRODUCTS-MIB
-
+see devmibs.sh
 """
 import dataclasses
 import logging
 import pprint
 import socket
 import typing
+import os
 
 import pysnmp.hlapi
 import pysnmp.proto.rfc1902
@@ -25,10 +22,8 @@ from netdisc.snmp import snmpbase, engine
 from netdisc.tools import helpers
 
 
-DUMP_MODE = True
-PYENG_DEBUG_CALLS = "/home/rwd/netdisc/tests/pyeng_saved_calls.yaml"
-
-debug_dumper = helpers.SNMPEngDebugDumper(DUMP_MODE, PYENG_DEBUG_CALLS)
+PYENG_DEBUG_OUTPUT = os.getenv("PYENG_DEBUG_OUTPUT")
+debug_dumper = helpers.SNMPEngDebugDumper(PYENG_DEBUG_OUTPUT)
 
 
 logger = logging.getLogger(__name__)
