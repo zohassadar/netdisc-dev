@@ -9,7 +9,8 @@ import pytest
 
 
 check_debug_info = pytest.mark.skipif(
-    not pathlib.Path(pyeng.PYENG_DEBUG_CALLS).exists, reason="Debug Info Unavailable"
+    not pyeng.PYENG_DEBUG_OUTPUT or not pathlib.Path(pyeng.PYENG_DEBUG_OUTPUT).exists,
+    reason="Debug Info Unavailable",
 )
 
 
@@ -20,7 +21,7 @@ def get_fake_pyeng(mib_helper, ip_address):
         host=ip_address,
         community="wordup",
     )
-    dumped_retriever = helpers.SNMPEngDumpedDebug(pyeng.PYENG_DEBUG_CALLS, ip_address)
+    dumped_retriever = helpers.SNMPEngDumpedDebug(pyeng.PYENG_DEBUG_OUTPUT, ip_address)
     py2.get = unittest.mock.Mock(side_effect=dumped_retriever.retrieve)
     py2.walk = unittest.mock.Mock(side_effect=dumped_retriever.retrieve)
     return py2

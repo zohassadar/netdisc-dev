@@ -13,7 +13,7 @@ import os
 import easysnmp
 import easysnmp.exceptions
 
-from tools import helpers
+from netdisc.tools import helpers
 from netdisc.snmp import engine
 
 logger = logging.getLogger(__name__)

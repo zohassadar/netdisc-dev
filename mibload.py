@@ -28,7 +28,6 @@ PYMIBS = list(pathlib.Path(pymibs.__file__).parent.glob("[!_]*"))
 PYTARGET = pathlib.Path.joinpath(pathlib.Path.home(), ".pysnmp", "mibs")
 
 
-
 if __name__ == "__main__":
     copy_mibs(ASN1MIBS, ASN1TARGET)
     copy_mibs(PYMIBS, PYTARGET)

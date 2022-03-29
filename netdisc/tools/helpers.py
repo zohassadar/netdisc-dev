@@ -259,8 +259,8 @@ class SNMPEngDebugDumper:
 
     def __post_init__(self):
         self._enabled = False
-        pathlib.Path(self.file)
         if self.file:
+            pathlib.Path(self.file)
             self._enabled = True
 
     def dump(self, ip, result, *args):

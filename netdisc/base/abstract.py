@@ -71,6 +71,13 @@ class TopologyBase(abc.ABC):
     ) -> None:
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def check_device_ip(
+        self,
+        ip: str,
+    ) -> bool:
+        raise NotImplementedError
+
 
 class QueueBase(abc.ABC):
     """Queueing solution"""
