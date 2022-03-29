@@ -23,6 +23,8 @@ EASY_PRIVS = ("AES", "DES", "3DES")
 
 
 class EasySNMPEngine(engine.SNMPEngine):
+    __doc__ = engine.SNMPEngine.__doc__
+
     def __init__(self, *args, **kwargs):
         self._kwargs = {}
         super().__init__(*args, **kwargs)
@@ -102,16 +104,19 @@ class EasySNMPEngine(engine.SNMPEngine):
         *paths,
     ):
         logger.debug("%s _get invoked: %s", type(self), paths)
-
-        results = self._session.get(
-            list(paths),
-        )
+        results = []
+        try:
+            results = self._session.get(
+                list(paths),
+            )
+        except easysnmp.exceptions.EasySNMPError:
+            logger.error("Error attempting to get: %s", "".join(paths))
         return results
 
     def get(
         self,
         *paths,
-    ):
+    ) -> list[tuple[typing.Any, str, typing.Any]]:
         logger.debug("%s get invoked: %s", type(self), paths)
 
         results = self._get(*paths)
@@ -127,15 +132,19 @@ class EasySNMPEngine(engine.SNMPEngine):
         *paths,
     ):
         logger.debug("%s _walk invoked: %s", type(self), paths)
-        results = self._session.bulkwalk(
-            list(paths),
-        )
+        results = []
+        try:
+            results = self._session.bulkwalk(
+                list(paths),
+            )
+        except easysnmp.exceptions.EasySNMPError:
+            logger.error("Error attempting to walk: %s", "".join(paths))
         return results
 
     def walk(
         self,
         *paths,
-    ):
+    ) -> list[tuple[typing.Any, str, typing.Any]]:
         results = self._walk(*paths)
         logger.debug("%s received %s results", type(self), len(results))
         processed = self._process_results(results)

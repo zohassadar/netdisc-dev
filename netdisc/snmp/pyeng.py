@@ -50,6 +50,8 @@ PY_PRIV_TABLE = {
 
 
 class PySNMPEngine(engine.SNMPEngine):
+    __doc__ == engine.SNMPEngine.__doc__
+
     def __init__(self, *args, **kwargs):
         self._credential = None
         super().__init__(*args, **kwargs)

@@ -1,7 +1,8 @@
-black >= 22.1.0
+black>=22.1.0
+click==8.0.4
 covdefaults
 coverage
 pre-commit
-pylint == 2.12.2
-pytest >= 6.2.5
-tox >= 3.24.5
+pylint==2.12.2
+pytest>=6.2.5
+tox>=3.24.5

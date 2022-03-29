@@ -6,6 +6,7 @@
 *.pyc
 *.rc
 *.sh
+!devmibs.sh
 
 *.ini
 !tox.ini

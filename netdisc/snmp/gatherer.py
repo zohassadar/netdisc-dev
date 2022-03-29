@@ -1,4 +1,5 @@
 import dataclasses
+from xml.dom.minidom import Attr
 from netdisc.snmp import engine, snmpbase
 from netdisc.base import abstract
 import logging
@@ -12,8 +13,10 @@ def unfiltered(value):
 
 
 def remove_fqdn(value):
-    assert isinstance(value, str)
-    return value.split(".")[0]
+    try:
+        return value.split(".")[0]
+    except AttributeError:
+        return value
 
 
 SNMPv2_MAP = {
@@ -88,12 +91,18 @@ class SNMPGeneric(abstract.Gatherer):
         for idx, neighbor in neighbors.items():
             logger.debug("Processing neighbor index: %s", idx)
             intf_idx = idx.lldp_if
-            lldp_port: snmpbase.LLDPInterface = neighbor_ports.interfaces_by_lldp_if[
-                intf_idx
-            ]
-            interface = interfaces.interfaces_by_if_descr[lldp_port.lldpLocPortDesc]
+            if not (lldp_port := neighbor_ports.interfaces_by_lldp_if.get(intf_idx)):
+                logger.warning("%s not found in interfaces_by_lldp_if", intf_idx)
+                continue
             result = {}
-            result = apply_mapping(interface, LLDP_IF_MAP, result)
+            if interface := interfaces.interfaces_by_if_descr.get(
+                lldp_port.lldpLocPortDesc
+            ):
+                result = apply_mapping(interface, LLDP_IF_MAP, result)
+            else:
+                logger.warning(
+                    "%s not found in interfaces_by_if_descr", lldp_port.lldpLocPortDesc
+                )
             result = apply_mapping(neighbor, LLDP_NEIGHBOR_MAP, result)
             if mgmt_ip := lldp_mgmt_ips.ip_by_neigh_idx.get(idx):
                 result["ip"] = mgmt_ip

@@ -92,6 +92,24 @@ class SNMPEngineAbstract(abc.ABC):
 
 @dataclasses.dataclass
 class SNMPEngine(SNMPEngineAbstract):
+    """netdisc snmp engine
+
+    Args:
+        host (str): _description_
+        port (int): Port
+        community (str): <community string>
+        snmpuser (str): <username, or security name>
+        auth (str): <authentication string>
+        authtype (str): [ MD5 | SHA ]
+        priv (str): <privacy string>
+        privtype (str): [ AES | DES | 3DES ]
+
+    Raises:
+        ValueError: Any issues during setup
+        RunTimeError: When any issues come up after running
+
+    """
+
     mib_helper: mibhelp.MIBHelper = None
     host: str = (None,)
     port: int = 161
