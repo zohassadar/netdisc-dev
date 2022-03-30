@@ -64,10 +64,10 @@ class EasySNMPEngine(engine.SNMPEngine):
         privtype: str,
         priv: str,
     ):
-        if auth not in EASY_AUTHS:
-            raise ValueError(f"Invalid Auth Type for Easy SNMP: {auth}")
-        if priv not in EASY_PRIVS:
-            raise ValueError(f"Invalid Priv Type for Easy SNMP: {priv}")
+        if authtype not in EASY_AUTHS:
+            raise ValueError(f"Invalid Auth Type for Easy SNMP: {authtype}")
+        if privtype not in EASY_PRIVS:
+            raise ValueError(f"Invalid Priv Type for Easy SNMP: {privtype}")
         self._kwargs["version"] = 3
         self._kwargs["security_level"] = "auth_with_privacy"
         self._kwargs["security_username"] = snmpuser
@@ -82,8 +82,8 @@ class EasySNMPEngine(engine.SNMPEngine):
         authtype: str,
         auth: str,
     ):
-        if auth not in EASY_AUTHS:
-            raise ValueError(f"Invalid Auth Type for Easy SNMP: {auth}")
+        if authtype not in EASY_AUTHS:
+            raise ValueError(f"Invalid Auth Type for Easy SNMP: {authtype}")
         self._kwargs["version"] = 3
         self._kwargs["security_level"] = "auth_without_privacy"
         self._kwargs["security_username"] = snmpuser
