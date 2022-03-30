@@ -110,22 +110,22 @@ class SNMPGeneric(abstract.Gatherer):
         return results
 
     def get_routes(self):
-        pass
+        return []
 
     def get_vlans(self):
-        pass
+        return []
 
     def get_vrfs(self):
-        pass
+        return []
 
     def get_macs(self):
-        pass
+        return []
 
     def get_arps(self):
-        pass
+        return []
 
     def get_ip_addresses(self) -> list[dict[str, str | int | bool]]:
-        return super().get_ip_addresses()
+        return []
 
     def get_ipv6_addresses(self) -> list[dict[str, str | int | bool]]:
-        return super().get_ipv6_addresses()
+        return []

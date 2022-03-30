@@ -20,15 +20,18 @@ import pysnmp.smi.view
 
 from netdisc.snmp import snmpbase, engine
 from netdisc.tools import helpers
-
-
-PYENG_DEBUG_OUTPUT = os.getenv("PYENG_DEBUG_OUTPUT")
-debug_dumper = helpers.SNMPEngDebugDumper(PYENG_DEBUG_OUTPUT)
-
+import logging
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+PYENG_DEBUG_OUTPUT = os.getenv("PYENG_DEBUG_OUTPUT")
+
+
+if PYENG_DEBUG_OUTPUT:
+    logger.error("PYENG_DEBUG_OUTPUT is in use")
+else:
+    logger.info("PYENG_DEBUG_OUTPUT is not in use")
 
 PY_AUTH_TABLE = {
     "MD5": pysnmp.hlapi.auth.usmHMACMD5AuthProtocol,
@@ -50,6 +53,7 @@ class PySNMPEngine(engine.SNMPEngine):
     def __init__(self, *args, **kwargs):
         self._credential = None
         super().__init__(*args, **kwargs)
+        self.debug_dumper = helpers.SNMPEngDebugDumper(PYENG_DEBUG_OUTPUT)
 
     def setup(self):
         logger.debug("PySNMP Setup started")
@@ -162,7 +166,7 @@ class PySNMPEngine(engine.SNMPEngine):
             error_index,
             var_binds,
         )
-        debug_dumper.dump(self.host, result, *paths)
+        self.debug_dumper.dump(self.host, result, *paths)
         return result
 
     def _walk(self, *paths):
@@ -201,7 +205,7 @@ class PySNMPEngine(engine.SNMPEngine):
                     var_binds,
                 )
             )
-        debug_dumper.dump(self.host, results, *paths)
+        self.debug_dumper.dump(self.host, results, *paths)
         return results
 
     def _get_var_bindings(self, *paths) -> list:

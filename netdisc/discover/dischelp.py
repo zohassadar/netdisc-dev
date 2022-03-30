@@ -21,7 +21,7 @@ def gather_and_test(
     result["vrfs"] = gatherer.get_vrfs()
 
     exception = None
-
+    device.Device().load(result)
     try:
         device.Device().load(result) if not disabled else None
     except ValueError as exc:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 import logging
+from pprint import pp
 import typing
 import functools
 from netdisc.tools import helpers
@@ -485,6 +486,8 @@ class Device(DeclarativeBase):
             )
 
         getter = getattr(self, get_func)
+        pp(dumped)
+        print(container)
         for entry in dumped.get(container, []):
             key = tuple(entry.get(a) for a in args)
             if existing := getter(*key):

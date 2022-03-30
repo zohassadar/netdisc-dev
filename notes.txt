@@ -71,5 +71,9 @@ echo -e "Host github.com-$REPONAME\n  Hostname github.com\n  IdentityFile /home/
 
 
 #Run precommit on everything:
-
 find . -name "*.py" -path "./netdisc/*" | xargs pre-commit run --files
+
+
+#Run coverage, report, then run nginx webserver to see coverage:
+python -m coverage run -m pytest && coverage html
+docker run --name ndweb -p 42000:80 -v htmlcov:/usr/share/nginx/html:ro -d nginx

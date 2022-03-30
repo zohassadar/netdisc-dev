@@ -19,6 +19,7 @@
 
 *.yaml
 !tests/device_*.yaml
+!tests/pyeng_debug.yaml
 !netdisc/base/categories.yaml
 !.github/workflows/tests.yaml
 

@@ -43,7 +43,7 @@ def fake_pyeng(fake_pyeng_arg, mib_helper_no_flags):
 @check_debug_info
 @pytest.mark.parametrize(
     ("fake_pyeng_arg"),
-    ("192.168.42.254",),
+    ("172.17.0.2",),
 )
 def test_pyeng(fake_pyeng):
     gatherer.SNMPGeneric(fake_pyeng)
@@ -52,7 +52,7 @@ def test_pyeng(fake_pyeng):
 @check_debug_info
 @pytest.mark.parametrize(
     ("fake_pyeng_arg"),
-    ("192.168.42.254",),
+    ("172.17.0.2",),
 )
 def test_pyeng_interfaces(fake_pyeng):
     g = gatherer.SNMPGeneric(fake_pyeng)

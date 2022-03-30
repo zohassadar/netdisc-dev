@@ -260,12 +260,17 @@ class SNMPEngDebugDumper:
     def __post_init__(self):
         self._enabled = False
         if self.file:
+            logger.error("Writing SNMP output to: %s", self.file)
             pathlib.Path(self.file)
             self._enabled = True
+        else:
+            logger.info("SNMP output won't be recorded")
 
     def dump(self, ip, result, *args):
         if not self._enabled:
+            logger.info("Skipping this dump")
             return
+        logger.warning("Dumping contents for %s", ip)
         contents = None
         try:
             with open(self.file) as f:
