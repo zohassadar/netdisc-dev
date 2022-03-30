@@ -1,8 +1,8 @@
-""" 
+"""
 S = Starting Host
 N = Neighbor (discovered host
 
-[S1, S2, S3] 
+[S1, S2, S3]
   ->  _hopper
 
 
@@ -16,7 +16,6 @@ import collections
 import dataclasses
 import logging
 import queue
-import pprint
 from netdisc.base import abstract, device
 from netdisc.discover import authen, worker
 
@@ -63,7 +62,6 @@ class DiscoveryRunner:
         while self._running():
             self._check_new()
             self._check_finished()
-        print("complete")
 
     def __post_init__(self):
         logger.debug("Initializing looper")
@@ -110,9 +108,6 @@ class DiscoveryRunner:
 
         Reset if all are empty and loop_forever is enabled
         """
-
-        pprint.pprint(self._pending)
-        pprint.pprint(self._known_ips)
         if self._idle_count > self.max_loops:
             logger.error("Exceeded max loops %s", self.max_loops)
             return False
