@@ -74,7 +74,7 @@ class EasySNMPEngine(engine.SNMPEngine):
         self._kwargs["auth_protocol"] = authtype
         self._kwargs["auth_password"] = auth
         self._kwargs["privacy_protocol"] = privtype
-        self._kwargs["privacy_password "] = priv
+        self._kwargs["privacy_password"] = priv
 
     def set_v3_auth(
         self,
