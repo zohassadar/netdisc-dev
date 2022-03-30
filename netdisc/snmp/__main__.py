@@ -33,13 +33,13 @@ parser.add_argument(
 )
 parser.add_argument(
     "-x",
-    "--priv",
+    "--privtype",
     type=str,
     help="Privacy protocol (DES|AES)",
 )
 parser.add_argument(
     "-X",
-    "--privtype",
+    "--priv",
     type=str,
     help="Privacy passphrase",
 )
