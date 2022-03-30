@@ -85,6 +85,3 @@ class DeviceTypes(enum.Enum):
     nxos = DEVICE_NXOS
     asa = DEVICE_ASA
     eos = DEVICE_EOS
-
-    def __str__(self):
-        return self.value

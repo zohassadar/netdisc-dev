@@ -196,6 +196,14 @@ def test_example_input(example_input_1):
     a.load_authentication_methods(example_input_1)
 
 
+def test_example_input_get_kwargs(example_input_1):
+    a = authen.AuthMethodList()
+    a.load_authentication_methods(example_input_1)
+    on_deck = a.copy()
+    auth = on_deck.next()
+    assert auth.kwargs == example_input_1["userpass"]
+
+
 def test_example_input_invalid(example_input_invalid):
     with pytest.raises(ValueError):
         a = authen.AuthMethodList()
@@ -236,18 +244,11 @@ def test_example_input_next_called(example_input_1):
         a.next()
 
 
-def test_example_input_next_protocol_called(example_input_1):
+def test_example_input_next_called_with_auth_failure(example_input_1):
     with pytest.raises(RuntimeError):
         a = authen.AuthMethodList()
         a.load_authentication_methods(example_input_1)
-        a.next_protocol()
-
-
-def test_example_input_copy_next_protocol_called(example_input_1):
-    with pytest.raises(RuntimeError):
-        a = authen.AuthMethodList()
-        a.load_authentication_methods(example_input_1)
-        a.copy().next_protocol()
+        a.next(authentication_failure=False)
 
 
 def test_example_input_first_auth(simple_input):
@@ -263,7 +264,7 @@ def test_example_input_second_auth_next(simple_input):
     a.load_authentication_methods(simple_input)
     copy = a.copy()
     copy.next()
-    auth = copy.next()
+    auth = copy.next(authentication_failure=True)
     assert auth.proto is constant.Proto.SSH
 
 
@@ -272,7 +273,7 @@ def test_example_input_second_auth_next_protocol(simple_input):
     a.load_authentication_methods(simple_input)
     copy = a.copy()
     copy.next()
-    auth = copy.next_protocol()
+    auth = copy.next(authentication_failure=False)
     assert auth.proto is constant.Proto.SNMPv2c
 
 
@@ -290,7 +291,7 @@ def test_example_input_first_auth_retries_next_protocol(simple_input_with_retrie
     a.load_authentication_methods(simple_input_with_retries)
     copy = a.copy()
     first_auth = copy.next()
-    second_auth = copy.next_protocol()
+    second_auth = copy.next(authentication_failure=False)
     assert first_auth is second_auth
 
 

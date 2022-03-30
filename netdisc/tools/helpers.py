@@ -1,11 +1,12 @@
 import dataclasses
 import functools
 import logging
+import pathlib
 import pprint
+import readline
 import sys
 import time
 import typing
-import pathlib
 
 import yaml
 
@@ -19,10 +20,17 @@ _INIT = "__init__"
 UPDATE = "update"
 
 
-def dummy(*args, **kwargs):
-    """Stand in function that returns itself"""
-    logger.debug("Dummy Executed with args: %s kwargs: %s", args, kwargs)
-    return dummy
+def history(count=100):
+    hlen = readline.get_current_history_length()
+    for i in range(hlen - count, hlen):
+        print(readline.get_history_item(i))
+
+
+class dummy:
+    def __new__(cls, *args, **kwargs):
+        """Stand in function that returns itself"""
+        logger.debug("dummy Executed with args: %s kwargs: %s", args, kwargs)
+        return dummy
 
 
 class NEED_LIST:
@@ -63,8 +71,11 @@ def add_kwargs_init(*wrapped, filter_=None):
                 continue
             if prop.startswith("_"):
                 continue
-            if getattr(self, prop) is NEED_LIST:
+            attr = getattr(self, prop)
+            if attr is NEED_LIST:
                 setattr(self, prop, [])
+            if attr is dummy:
+                setattr(self, prop, None)
         for key, value in kwargs.items():
             if not (hasattr(self, key) and filter_(key)):
                 raise AttributeError(

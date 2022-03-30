@@ -1,10 +1,27 @@
+""" 
+S = Starting Host
+N = Neighbor (discovered host
+
+[S1, S2, S3] 
+  ->  _hopper
+
+
+
+"""
+
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+import collections
 import dataclasses
 import logging
-import sys
-import time
-
-from netdisc.base import abstract, device, topology
+import queue
+import pprint
+from netdisc.base import abstract, device
 from netdisc.discover import authen, worker
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 @dataclasses.dataclass
@@ -12,185 +29,213 @@ class PendingDevice:
     ip: str
     hostname: str = None
     sysinfo: str = None
+    auth_methods: authen.AuthMethodList = None
     extra: dict = dataclasses.field(default_factory=dict)
 
     def __post_init__(self):
-        self.auth_methods: authen.AuthMethodList = None
-        self.failure_reasons = []
-        self.device: device.Device = None
-        self.dumped_device: dict = None
+        self.failure_reasons: list[str] = []
+        self.device: device.Device = device.Device()
+        self.dumped_device: dict[str, str | int | bool | list] = {}
 
 
 @dataclasses.dataclass
 class DiscoveryRunner:
-    topology: abstract.TopologyBase
-    hopper: list[PendingDevice]
-    queue: abstract.QueueBase
-    auth_methods: authen.AuthMethodList
+    topology: abstract.TopologyBase = None
+    hostlist: list = dataclasses.field(
+        default_factory=list,
+    )
+    auth_methods: authen.AuthMethodList = dataclasses.field(
+        default_factory=authen.AuthMethodList,
+    )
+    discovery_q: queue.Queue = dataclasses.field(
+        default_factory=queue.Queue,
+    )
+    discovered_q: queue.Queue = dataclasses.field(
+        default_factory=queue.Queue,
+    )
     # filters: list[abstract.FilterBase]
-    outputs: list[abstract.OutputBase]
-    server_mode: bool = False
-    dead_timer: int = 100
+    # outputs: list[abstract.OutputBase]
+    loop_forever: bool = False
+    max_loops: int = 10
     loop_sleep: int = 1
 
+    def loop(self):
+        while self._running():
+            self._check_new()
+            self._check_finished()
+        print("complete")
+
     def __post_init__(self):
-        self._entered = False
-        self._pending_devices = {}
-        self._on_deck = None
-        self._existing_device = None
-        self._dead_timer = self.dead_timer
-        self._killed = False
-        self._reset_hopper()
+        logger.debug("Initializing looper")
+        # Devices awaiting discovery
+        self._pending: dict[str, PendingDevice] = {}
 
-    def __enter__(self):
-        self._entered = True
-        return self
+        # Container of IP addresses confirmed to have been visited.
+        self._known_ips: set[str] = set()
 
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        self.queue.close()
+        # Devices waiting to be discovered
+        self._hopper: collections.deque[PendingDevice] = collections.deque()
 
-    def run(self):
-        if not self._entered:
-            raise RuntimeError(
-                f"Cannot call {self.__class__.__name__}.run() without using context manager"
-            )
-        while self._not_dead():
-            if self._check_hopper():
-                continue
-            if self._check_result_queue():
-                continue
-            logging.info(
-                "Sleeping for %s seconds",
-                self.loop_sleep,
-            )
-            time.sleep(self.loop_sleep)
+        # Start counter for idle cycles
+        self._idle_count = 0
+
+        # Run reset to populate self._hopper with self.hostlist
+        self._reset()
 
     def _not_dead(self):
+        """Reset the dead timer"""
+        logger.debug("we're still alive")
+        self._idle_count = 0
 
-        self._dead_timer -= 1
-        if self._killed:
+    def _reset(self):
+        """Reset the state of the loop
+
+        Used at the beginning to fill _hopper
+
+        Used at the end of the loop to fill _hopper with
+        the same list as the starting list when loop_forever
+        is used
+        """
+        _starting_hosts = []
+        for host in self.hostlist:
+            logger.debug("Adding start host: %s", host)
+            _pending = PendingDevice(ip=host, auth_methods=self.auth_methods.copy())
+            _starting_hosts.append(_pending)
+        logger.debug("Resetting looper with %s starting hosts", len(_starting_hosts))
+        self._hopper.extend(_starting_hosts)
+        self._known_ips = set()
+
+    def _running(self) -> bool:
+        """Check both queue lengths and the _hopper length
+
+        Reset if all are empty and loop_forever is enabled
+        """
+
+        pprint.pprint(self._pending)
+        pprint.pprint(self._known_ips)
+        if self._idle_count > self.max_loops:
+            logger.error("Exceeded max loops %s", self.max_loops)
             return False
-        if self._dead_timer >= 0:
-            return True
-        if self._pending_devices:
-            return False
-        if self.server_mode:
-            self._reset_hopper()
-            return True
-
-    def _reset_hopper(self):
-        self._hopper = self.hopper.copy()
-
-    def _reset_on_deck(self):
-        self._dead_timer = self.dead_timer
-        self._on_deck = None
-
-    def _check_hopper(self):
-        if self._on_deck:
-            raise RuntimeError(
-                "Unexpected.  _check_result_queue called when _on_deck populated"
-            )
-        if not self._hopper:
-            return
-        # Pop first element
-        pending, self._hopper = self._hopper[0], self._hopper[1:]
-        logging.info(
-            "Pulled %s %s from the hopper",
-            pending.ip,
-            pending.hostname,
+        self._idle_count += 1
+        _discovery_l = self.discovery_q.qsize()
+        _discovered_l = self.discovered_q.qsize()
+        _hopper_l = len(self._hopper)
+        _result = bool(_discovery_l + _discovered_l + _hopper_l)
+        logger.debug(
+            "Q Stats: Idle: %s Pre: %s Post: %s Hopper: %s",
+            self._idle_count,
+            _discovery_l,
+            _discovered_l,
+            _hopper_l,
         )
-        self._on_deck = pending
-        self._on_deck.auth_methods = self.auth_methods.copy()
-        self._submit_new_task()
-        return True
+        if not _result and self.loop_forever:
+            logger.info("Discovery complete.  Starting over.")
+            _result = True
+            self._reset()
+        elif not _result:
+            logger.warning("Discovery complete")
+        return _result
 
-    def _check_result_queue(self):
-        if self._on_deck:
-            raise RuntimeError(
-                "Unexpected.  _check_result_queue called when _on_deck populated"
-            )
-        if self.queue.empty():
-            return
+    def _add_task_request(self, pending: PendingDevice):
+        """If an authentication method is available, put in the queue
 
-        response = self.queue.get(timeout=self.loop_sleep)
-        if not response:
-            return
-
-        result = worker.TaskResponse(*response)
-        logging.debug(self._pending_devices)
-        self._on_deck = self._pending_devices.pop(result.ip, None)
-        if not self._on_deck:
-            raise RuntimeError(f"Pending devices has no entry for {result.ip}")
-
-        self._on_deck.device = device.Device()
-        self._on_deck.device.load_partial(result.dumped_device)
-        logging.info(
-            "Pulled %s %s from the result_queue",
-            self._on_deck.device.device_ip,
-            self._on_deck.device.hostname,
+        If not, _send_to_topology
+        """
+        logger.debug(
+            "authentication_failure = %s", pending.device.authentication_failure
         )
-        self._on_deck.dumped_device = result.dumped_device
-        if self._on_deck.device.failed:
-            self._on_deck.failure_reasons.append(self._on_deck.device.failure_reason)
-        self._submit_new_task()
-        return True
-
-    def _submit_new_task(self):
-        if not self._on_deck:
-            raise RuntimeError(
-                "Unexpected. _submit_new_task called when _on_deck not populated"
-            )
-        if self._on_deck.device and not self._on_deck.device.failed:
-            self._update_device()
+        auth = pending.auth_methods.next(pending.device.authentication_failure)
+        if not auth:
+            logger.error("exhausted authentication %s %s", pending.ip, pending.hostname)
+            self._send_to_topology(pending)
             return
-
-        if not self._on_deck.device or self._on_deck.device.authentication_failure:
-            authmethod = self._on_deck.auth_methods.next()
-        else:
-            authmethod = self._on_deck.auth_methods.next_protocol()
-
-        if not authmethod:
-            self._update_device()
-            return
-
-        self._pending_devices[self._on_deck.ip] = self._on_deck
+        logger.info("submitting task for %s %s", pending.ip, pending.hostname)
+        logger.debug("auth repr: %s", auth)
+        logger.debug("kwargs provided: %s", auth.kwargs)
         task = worker.TaskRequest(
-            self._on_deck.ip,
-            authmethod.proto,
-            authmethod.kwargs(),
-            self._on_deck.hostname,
-            self._on_deck.sysinfo,
-            self._on_deck.extra,
+            ip=pending.ip,
+            proto=str(auth.proto),
+            kwargs=auth.kwargs,
+            hostname=pending.hostname,
+            sysinfo=pending.sysinfo,
+            extra=pending.extra,
         )
+        self.discovery_q.put(tuple(task))
 
-        logging.info(
-            "Submitting %s %s %s into the task queue",
-            self._on_deck.ip,
-            self._on_deck.hostname,
-            authmethod,
-        )
-        self.queue.put(task)
-        self._reset_on_deck()
+    def _check_new(self):
+        """Empty _hopper and send to _add_task_request
 
-    def _add_device(self):
-        if not self._on_deck:
-            raise RuntimeError(
-                "Unexpected. add_device called when _on_deck not populated"
+        ignore IPs that have been seen
+        """
+        while self._hopper:
+            self._not_dead()
+            _pending = self._hopper.popleft()
+            _ip = _pending.ip
+            if _ip in self._known_ips:
+                logger.info(f"Skipping %s.  Already visited", _ip)
+                continue
+            self._known_ips.add(_ip)
+            self._pending[_ip] = _pending
+            logger.debug(
+                "Adding to discovery queue: %s %s",
+                _pending.ip,
+                _pending.hostname,
             )
-        self._on_deck.device.load(self._on_deck.dumped_device)
-        self.topology.add_device(self._on_deck.device)
-        self._reset_on_deck()
+            self._add_task_request(_pending)
 
-    def _update_device(self):
-        if not self._on_deck:
-            raise RuntimeError(
-                "Unexpected. _update_device called when _on_deck not populated"
-            )
-        existing = self.topology.get_device(self._on_deck.ip)
-        if not existing:
-            self._add_device()
+    def _check_finished(self):
+        """Check and see if anything has come back.
+
+        Send to _add_task_request if it failed
+
+        _send_to_topology if it succeeded
+        """
+        try:
+            response = self.discovered_q.get(timeout=self.loop_sleep)
+        except queue.Empty:
+            logger.info("Nothing complete in the discovered queue")
             return
-        existing.update(self._on_deck.device)
-        topology.update(existing)
-        # self._hopper.extend(self.filters(self._on_deck.existing))
-        self._reset_on_deck()
+        self._not_dead()
+        _response = worker.TaskResponse(*response)
+        _pending = self._pending[_response.ip]
+        logger.debug("Popped from the queue %s: %s", _response.ip, _response.dumped)
+        _pending.dumped_device = _response.dumped
+        _pending.device.load_partial(_pending.dumped_device)
+        if _pending.device.failed:
+            logger.error(
+                "Device failed.  Sending back through: %s %s",
+                _pending.ip,
+                _pending.hostname,
+            )
+            self._add_task_request(_pending)
+        else:
+            logger.info(
+                "Device succeeded.  Adding to topology: %s %s",
+                _pending.ip,
+                _pending.hostname,
+            )
+            self._send_to_topology(_pending)
+
+    def _send_to_topology(self, pending: PendingDevice):
+        """Extract neighbors and send device to topology
+        Pop from _pending dictionary
+        """
+        pending.device.load(pending.dumped_device)
+        self._extract_neighbors(pending)
+        self._extract_ip_addresses(pending)
+        self._pending.pop(pending.ip)
+        self.topology.update_device(pending.device)
+
+    def _extract_neighbors(self, pending):
+        for neighbor in pending.device.neighbors:
+            _pending = PendingDevice(
+                auth_methods=self.auth_methods.copy(),
+                ip=neighbor.ip,
+                hostname=neighbor.hostname,
+                sysinfo=neighbor.sysinfo,
+            )
+            self._hopper.append(_pending)
+
+    def _extract_ip_addresses(self, pending):
+        for ip_address in pending.device.ip_addresses:
+            self._known_ips.add(ip_address.address)

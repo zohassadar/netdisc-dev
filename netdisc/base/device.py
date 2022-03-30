@@ -1,10 +1,14 @@
 from __future__ import annotations
-import logging
-from pprint import pp
-import typing
+
 import functools
+import logging
+import pprint
+import typing
+
 from netdisc.tools import helpers
 
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 ORM_BUILTINS = ("registry", "metadata", "mro")
 
@@ -391,7 +395,6 @@ class Device(DeclarativeBase):
     def _clear_cached_properties(self):
         for name in dir(type(self)):
             if isinstance(getattr(type(self), name), functools.cached_property):
-                print(f"Clearing self.{name}")
                 vars(self).pop(name, None)
 
     @functools.cached_property
@@ -473,6 +476,7 @@ class Device(DeclarativeBase):
         return result
 
     def load_partial(self, dumped: dict):
+        logger.debug("loading partial from:\n%s", pprint.pformat(dumped))
         no_lists = {k: v for k, v in dumped.items() if not isinstance(v, list)}
         self.update(no_lists)
 
@@ -486,8 +490,6 @@ class Device(DeclarativeBase):
             )
 
         getter = getattr(self, get_func)
-        pp(dumped)
-        print(container)
         for entry in dumped.get(container, []):
             key = tuple(entry.get(a) for a in args)
             if existing := getter(*key):

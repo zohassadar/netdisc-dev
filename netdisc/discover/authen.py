@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import Value
 from netdisc.base import constant
 import dataclasses
 import typing
@@ -118,6 +117,7 @@ class AuthMethod:
     def protoport(self):
         return str(self.proto) + str(self.port)
 
+    @property
     def kwargs(self):
         return {
             k: v
@@ -263,21 +263,8 @@ class AuthMethodList:
 
         return result
 
-    def next(self) -> AuthMethod | None:
-        """Returns an AuthItem when one is available.
+    def next(self, authentication_failure: bool = False) -> AuthMethod | None:
 
-        The same one is delivered multiple times if retries are enabled
-
-        Returns
-        -------
-        AuthItem | None
-            None when the list is exhausted
-
-        Raises
-        ------
-        RuntimeError
-            _description_
-        """
         if not self._copy:
             raise RuntimeError(
                 f"{type(self).__name__}.next() cannot" " be called on the original",
@@ -285,6 +272,17 @@ class AuthMethodList:
 
         if self._on_deck:
             self.scorekeeper.record_failure(self._on_deck, self._copy)
+        elif authentication_failure:
+            raise RuntimeError(
+                "Authentication failure cannot occur before any credentials have been tried"
+            )
+
+        if (
+            self._on_deck
+            and not authentication_failure
+            and self._on_deck_retries >= self._on_deck.retries
+        ):
+            self._failed_protocols.append(self._on_deck.protoport)
 
         if self._on_deck and self._on_deck_retries < self._on_deck.retries:
             self._on_deck_retries += 1
@@ -302,28 +300,3 @@ class AuthMethodList:
         self._on_deck = self.authlist.pop()
         self._on_deck_retries = 0
         return self._on_deck
-
-    def next_protocol(self) -> AuthMethod | None:
-        """Used to request the next token when a protocol failure has occured.
-
-        If connections to telnet are failing, then other usernames and passwords for
-        telnet will be excluded
-
-        Returns
-        -------
-        AuthItem
-            Authentication Item
-
-        Raises
-        ------
-        RuntimeError
-            next_protocol cannot be called unless AuthItem is on deck
-        """
-        if not self._on_deck:
-            raise RuntimeError(
-                f"{self.__class__.__name__}.next_protocol"
-                " cannot be called unless AuthItem is on deck",
-            )
-        if self._on_deck_retries >= self._on_deck.retries:
-            self._failed_protocols.append(self._on_deck.protoport)
-        return self.next()
