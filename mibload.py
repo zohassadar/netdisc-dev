@@ -14,7 +14,7 @@ def copy_mibs(miblist: list[pathlib.Path], dest_dir: pathlib.Path):
         filename = mibfile.parts[-1]
         target = pathlib.Path.joinpath(dest_dir, filename)
         if target.exists():
-            logger.critical(f"Skipping %s: File Exists", str(target))
+            logger.error(f"Skipping %s: File Exists", str(target))
             continue
         shutil.copy2(mibfile, target)
 

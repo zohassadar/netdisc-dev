@@ -27,7 +27,7 @@ def snmp_discover(
     privtype: str = None,
     priv: str = None,
 ):
-    logger.error("called with: %s %s", host, community)
+    logger.info("SNMP Discover called for: %s %s", host, community)
     if extra is None:
         extra = {}
     mib_helper = mibhelp.MIBHelper(flags=snmpbase.MIBXlate.PYSNMP)
@@ -44,9 +44,9 @@ def snmp_discover(
 
     try:
         gather = gatherer.SNMPGeneric(loaded_engine)
-        error, result = dischelp.gather_and_test(gather, disabled=True)
+        device = dischelp.gather_and_test(gather)
     except RuntimeError as exc:
-        result = device_base.Device(
+        device = device_base.Device(
             device_ip=host, failed=True, failure_reason=str(exc)
         )
-    return result
+    return device

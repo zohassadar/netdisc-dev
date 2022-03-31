@@ -60,9 +60,7 @@ class DiscoveryRunner:
 
     def loop(self):
         while self._running():
-            logger.critical("checking new")
             self._check_new()
-            logger.critical("checking finished")
             self._check_finished()
 
     def __post_init__(self):
@@ -106,7 +104,6 @@ class DiscoveryRunner:
         self._known_hosts = set()
 
     def _running(self) -> bool:
-        logger.error("checking to see if we're running")
         """Check both queue lengths and the _hopper length
 
         Reset if all are empty and loop_forever is enabled
@@ -120,7 +117,7 @@ class DiscoveryRunner:
         _discovered_l = self.discovered_q.qsize()
         _hopper_l = len(self._hopper)
         _result = bool(_pending_l + _discovery_l + _discovered_l + _hopper_l)
-        logger.error(
+        logger.info(
             "Q Stats: Idle: %s Pending: %s, Pre: %s Post: %s Hopper: %s",
             self._idle_count,
             _pending_l,
@@ -147,13 +144,11 @@ class DiscoveryRunner:
         auth = pending.auth_methods.next(pending.device.authentication_failure)
         if not auth:
             logger.error(
-                "exhausted authentication %s %s", pending.host, pending.hostname
+                "Exhauted Authentication Methods %s %s", pending.host, pending.hostname
             )
             self._send_to_topology(pending)
             return
-        logger.info("submitting task for %s %s", pending.host, pending.hostname)
-        logger.debug("auth repr: %s", auth)
-        logger.debug("kwargs provided: %s", auth.kwargs)
+        logger.info("TaskRequest: %s %s", pending.host, pending.hostname)
         task = worker.TaskRequest(
             host=pending.host,
             proto=str(auth.proto),
@@ -200,7 +195,7 @@ class DiscoveryRunner:
         self._not_dead()
         _response = worker.TaskResponse(*response)
         _pending = self._pending[_response.host]
-        logger.critical(
+        logger.info(
             "Popped from the queue %s",
             _response.host,
         )
@@ -208,14 +203,14 @@ class DiscoveryRunner:
         _pending.device.load_partial(_pending.dumped_device)
         if _pending.device.failed:
             _pending.failure_reasons.append(_pending.device.failure_reason)
-            logger.critical(
+            logger.warning(
                 "Device failed.  Sending back through: %s %s",
                 _pending.host,
                 _pending.hostname,
             )
             self._add_task_request(_pending)
         else:
-            logger.critical(
+            logger.info(
                 "Device succeeded.  Adding to topology: %s %s",
                 _pending.host,
                 _pending.hostname,
@@ -223,8 +218,10 @@ class DiscoveryRunner:
             self._send_to_topology(_pending)
 
     def _extract_neighbors(self, pending):
-        logger.error("extracting neighbors")
+        logger.info("extracting neighbors from %s", pending.host)
         for neighbor in pending.device.neighbors:
+            if not neighbor.ip:
+                continue
             _pending = PendingDevice(
                 auth_methods=self.auth_methods.copy(),
                 host=neighbor.ip,

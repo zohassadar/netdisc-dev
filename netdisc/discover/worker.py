@@ -33,23 +33,31 @@ class TaskRequest(
         "TaskRequest", "host, proto, kwargs, hostname, sysinfo, extra"
     )
 ):
+    """Validated namedtuple
+
+    Args:
+
+        host (str): IP address being discovered
+        proto (str | Proto): protocol
+        kwargs (dict[str, str]): passed as **kwargs to function
+        hostname (str | None): hostname (if known)
+        sysinfo (str | None): sysinfo or version info (if known)
+        extra (dict): Additional options to pass to the engine
+    """
+
     def __new__(
         cls,
         host: str,
-        proto: str | constant.Proto,
+        proto: str,
         kwargs: dict,
         hostname: str | None,
         sysinfo: str | None,
         extra: str | None = None,
     ):
-
-        if isinstance(proto, str):
-            try:
-                proto = constant.Proto(proto)
-            except ValueError as exc:
-                raise ValueError("Not a valid Protocol") from exc
-        elif not isinstance(proto, constant.Proto):
-            raise ValueError("Protocol must be Protocol enum object")
+        try:
+            proto = str(constant.Proto(proto))
+        except ValueError as exc:
+            raise ValueError("Not a valid Protocol") from exc
 
         if extra is not None and not isinstance(extra, dict):
             raise ValueError("extra argument must be a dict")
@@ -74,12 +82,15 @@ class TaskRequest(
         return super().__new__(cls, host, proto, kwargs, hostname, sysinfo, extra)
 
 
-class TaskResponse(collections.namedtuple("TaskResponse", "host, dumped")):
-    def __new__(
-        cls,
-        host: str,
-        dumped: dict,
-    ):
+class TaskResponse(collections.namedtuple("TaskResponse", "host dumped")):
+    """validated named tuple
+
+    Args:
+        host (str): IP address of device being discovered
+        dumped (dict[str, str|int|bool|list]): result of discovery
+    """
+
+    def __new__(cls, host: str, dumped: dict):
         if not isinstance(dumped, dict):
             raise ValueError("TaskResponse requires dict as second argument")
         try:
@@ -90,9 +101,23 @@ class TaskResponse(collections.namedtuple("TaskResponse", "host, dumped")):
 
 
 def discovery_dispatch(task: TaskRequest) -> TaskResponse:
+    """Runs appropriate discovery function based on protocol
+
+    Args:
+       task (TaskRequest): namedtuple
+
+    Returns:
+       TaskResponse[str, dict[str, str|int|bool|list]]
+
+    """
     task = TaskRequest(*task)
-    logging.debug("Received request: host=%s, hostname=%s", task.host, task.hostname)
     proto = constant.Proto(task.proto)
+    logging.info(
+        "Dispatching: host=%s, hostname=%s, proto=%s",
+        task.host,
+        task.hostname,
+        proto,
+    )
     discoverer = get_discovery(proto)
     device = discoverer(
         host=task.host,
@@ -101,6 +126,5 @@ def discovery_dispatch(task: TaskRequest) -> TaskResponse:
         extra=task.extra,
         **task.kwargs,
     )
-    if hasattr(device, "dump"):
-        device = device.dump()
-    return TaskResponse(task.host, device)
+    logging.info("Dispatch received response from %s", task.host)
+    return TaskResponse(task.host, device.dump())

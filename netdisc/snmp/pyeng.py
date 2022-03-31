@@ -51,13 +51,13 @@ class PySNMPEngine(engine.SNMPEngine):
     __doc__ == engine.SNMPEngine.__doc__
 
     def __init__(self, *args, **kwargs):
-        logger.error("Initialized: %s %s", args, kwargs)
+        logger.info("PySNMPEngine Initialized: %s %s", args, kwargs)
         self._credential = None
         super().__init__(*args, **kwargs)
         self.debug_dumper = helpers.SNMPEngDebugDumper(PYENG_DEBUG_OUTPUT)
 
     def setup(self):
-        logger.error("PySNMP Setup started")
+        logger.info("PySNMP Setup started")
         self._target = pysnmp.hlapi.UdpTransportTarget(
             (self.host, self.port),
         )
@@ -69,7 +69,7 @@ class PySNMPEngine(engine.SNMPEngine):
         else:
             self._context = pysnmp.hlapi.ContextData()
 
-        logger.error("PySNMP Setup complete")
+        logger.info("PySNMP Setup complete")
 
     def set_v3_auth_priv(
         self,

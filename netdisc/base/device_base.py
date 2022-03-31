@@ -39,7 +39,7 @@ try:
     from sqlalchemy import orm
 
     DeclarativeBase = orm.declarative_base()
-    logging.critical("sqlalchemy loaded")
+    logging.info("sqlalchemy loaded")
 except (ModuleNotFoundError, AttributeError):
 
     @add_kwargs_init
@@ -52,7 +52,7 @@ except (ModuleNotFoundError, AttributeError):
     class orm:
         relationship = helpers.fake_orm_relationship
 
-    logging.critical("faklalchemy loaded")
+    logging.info("faklalchemy loaded")
 
 
 @orm_helper

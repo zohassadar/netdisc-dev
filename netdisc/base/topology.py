@@ -22,7 +22,7 @@ class MemoryTopology(abstract.TopologyBase):
         return results
 
     def update_device(self, device: device_base.Device):
-        logger.critical("%s", device)
+        logger.info("Completed Device %s", device.device_ip)
         if device.device_ip:
             self._devices[device.device_ip] = device
 

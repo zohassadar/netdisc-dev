@@ -19,7 +19,7 @@ def get_fake_pyeng(mib_helper, ip_address):
     py2 = pyeng.PySNMPEngine(
         mib_helper=mib_helper,
         host=ip_address,
-        community="wordup",
+        community="community",
     )
     dumped_retriever = helpers.SNMPEngDumpedDebug(pyeng.PYENG_DEBUG_OUTPUT, ip_address)
     py2.get = unittest.mock.Mock(side_effect=dumped_retriever.retrieve)
