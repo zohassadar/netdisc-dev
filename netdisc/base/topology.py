@@ -1,26 +1,34 @@
 import typing
+import yaml
+from netdisc.base import abstract, device_base
+import logging
 
-from netdisc.base import device, abstract
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class MemoryTopology(abstract.TopologyBase):
     def __init__(self):
-        self._devices: typing.Dict[str, device.Device] = {}
+        self._devices: typing.Dict[str, device_base.Device] = {}
 
-    def get_device(self, ip) -> device.Device:
-        for dev in self._devices.values():
-            for ip_row in dev.ip_addresses:
-                if ip_row.address == ip:
-                    return dev
+    @property
+    def yamlable(self):
+        results = {}
+        for ip, device in self._devices.items():
+            results[ip] = {
+                k: [dict(e) for e in v] if isinstance(v, list) else v
+                for k, v in dict(device).items()
+            }
+        return results
 
-    def delete_device(self, dev: device.Device):
-        assert hasattr(dev, "device_ip")
-        if not self._devices.pop(dev.device_ip, None):
-            raise RuntimeError("Unable to delete.  Device not found")
+    def update_device(self, device: device_base.Device):
+        logger.critical("%s", device)
+        if device.device_ip:
+            self._devices[device.device_ip] = device
 
-    def add_device(self, dev: device.Device):
-        assert hasattr(dev, "device_ip")
-        self._devices[dev.device_ip] = dev
+    def __enter__(self):
+        return self
 
-    def update_device(self, dev: device.Device):
-        assert hasattr(dev, "device_ip")
+    def __exit__(self, *exc):
+        with open("topology.yaml", "w+") as file:
+            yaml.dump(self.yamlable, file)

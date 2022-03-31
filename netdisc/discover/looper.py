@@ -16,7 +16,7 @@ import collections
 import dataclasses
 import logging
 import queue
-from netdisc.base import abstract, device
+from netdisc.base import abstract, device_base
 from netdisc.discover import authen, worker
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ logger.addHandler(logging.NullHandler())
 
 @dataclasses.dataclass
 class PendingDevice:
-    ip: str
+    host: str
     hostname: str = None
     sysinfo: str = None
     auth_methods: authen.AuthMethodList = None
@@ -33,7 +33,7 @@ class PendingDevice:
 
     def __post_init__(self):
         self.failure_reasons: list[str] = []
-        self.device: device.Device = device.Device()
+        self.device: device_base.Device = device_base.Device()
         self.dumped_device: dict[str, str | int | bool | list] = {}
 
 
@@ -60,7 +60,9 @@ class DiscoveryRunner:
 
     def loop(self):
         while self._running():
+            logger.critical("checking new")
             self._check_new()
+            logger.critical("checking finished")
             self._check_finished()
 
     def __post_init__(self):
@@ -69,7 +71,7 @@ class DiscoveryRunner:
         self._pending: dict[str, PendingDevice] = {}
 
         # Container of IP addresses confirmed to have been visited.
-        self._known_ips: set[str] = set()
+        self._known_hosts: set[str] = set()
 
         # Devices waiting to be discovered
         self._hopper: collections.deque[PendingDevice] = collections.deque()
@@ -97,13 +99,14 @@ class DiscoveryRunner:
         _starting_hosts = []
         for host in self.hostlist:
             logger.debug("Adding start host: %s", host)
-            _pending = PendingDevice(ip=host, auth_methods=self.auth_methods.copy())
+            _pending = PendingDevice(host=host, auth_methods=self.auth_methods.copy())
             _starting_hosts.append(_pending)
         logger.debug("Resetting looper with %s starting hosts", len(_starting_hosts))
         self._hopper.extend(_starting_hosts)
-        self._known_ips = set()
+        self._known_hosts = set()
 
     def _running(self) -> bool:
+        logger.error("checking to see if we're running")
         """Check both queue lengths and the _hopper length
 
         Reset if all are empty and loop_forever is enabled
@@ -112,13 +115,15 @@ class DiscoveryRunner:
             logger.error("Exceeded max loops %s", self.max_loops)
             return False
         self._idle_count += 1
+        _pending_l = len(self._pending)
         _discovery_l = self.discovery_q.qsize()
         _discovered_l = self.discovered_q.qsize()
         _hopper_l = len(self._hopper)
-        _result = bool(_discovery_l + _discovered_l + _hopper_l)
-        logger.debug(
-            "Q Stats: Idle: %s Pre: %s Post: %s Hopper: %s",
+        _result = bool(_pending_l + _discovery_l + _discovered_l + _hopper_l)
+        logger.error(
+            "Q Stats: Idle: %s Pending: %s, Pre: %s Post: %s Hopper: %s",
             self._idle_count,
+            _pending_l,
             _discovery_l,
             _discovered_l,
             _hopper_l,
@@ -141,14 +146,16 @@ class DiscoveryRunner:
         )
         auth = pending.auth_methods.next(pending.device.authentication_failure)
         if not auth:
-            logger.error("exhausted authentication %s %s", pending.ip, pending.hostname)
+            logger.error(
+                "exhausted authentication %s %s", pending.host, pending.hostname
+            )
             self._send_to_topology(pending)
             return
-        logger.info("submitting task for %s %s", pending.ip, pending.hostname)
+        logger.info("submitting task for %s %s", pending.host, pending.hostname)
         logger.debug("auth repr: %s", auth)
         logger.debug("kwargs provided: %s", auth.kwargs)
         task = worker.TaskRequest(
-            ip=pending.ip,
+            host=pending.host,
             proto=str(auth.proto),
             kwargs=auth.kwargs,
             hostname=pending.hostname,
@@ -165,15 +172,15 @@ class DiscoveryRunner:
         while self._hopper:
             self._not_dead()
             _pending = self._hopper.popleft()
-            _ip = _pending.ip
-            if _ip in self._known_ips:
-                logger.info(f"Skipping %s.  Already visited", _ip)
+            _host = _pending.host
+            if _host in self._known_hosts:
+                logger.info(f"Skipping %s.  Already visited", _host)
                 continue
-            self._known_ips.add(_ip)
-            self._pending[_ip] = _pending
+            self._known_hosts.add(_host)
+            self._pending[_host] = _pending
             logger.debug(
                 "Adding to discovery queue: %s %s",
-                _pending.ip,
+                _pending.host,
                 _pending.hostname,
             )
             self._add_task_request(_pending)
@@ -192,45 +199,51 @@ class DiscoveryRunner:
             return
         self._not_dead()
         _response = worker.TaskResponse(*response)
-        _pending = self._pending[_response.ip]
-        logger.debug("Popped from the queue %s: %s", _response.ip, _response.dumped)
+        _pending = self._pending[_response.host]
+        logger.critical(
+            "Popped from the queue %s",
+            _response.host,
+        )
         _pending.dumped_device = _response.dumped
         _pending.device.load_partial(_pending.dumped_device)
         if _pending.device.failed:
-            logger.error(
+            _pending.failure_reasons.append(_pending.device.failure_reason)
+            logger.critical(
                 "Device failed.  Sending back through: %s %s",
-                _pending.ip,
+                _pending.host,
                 _pending.hostname,
             )
             self._add_task_request(_pending)
         else:
-            logger.info(
+            logger.critical(
                 "Device succeeded.  Adding to topology: %s %s",
-                _pending.ip,
+                _pending.host,
                 _pending.hostname,
             )
             self._send_to_topology(_pending)
+
+    def _extract_neighbors(self, pending):
+        logger.error("extracting neighbors")
+        for neighbor in pending.device.neighbors:
+            _pending = PendingDevice(
+                auth_methods=self.auth_methods.copy(),
+                host=neighbor.ip,
+                hostname=neighbor.hostname,
+                sysinfo=neighbor.sysinfo,
+            )
+            self._hopper.append(_pending)
+
+    def _extract_host_addresses(self, pending):
+        for ip_address in pending.device.ip_addresses:
+            self._known_hosts.add(ip_address.address)
 
     def _send_to_topology(self, pending: PendingDevice):
         """Extract neighbors and send device to topology
         Pop from _pending dictionary
         """
         pending.device.load(pending.dumped_device)
+        pending.device.failure_history = ", ".join(pending.failure_reasons)
         self._extract_neighbors(pending)
-        self._extract_ip_addresses(pending)
-        self._pending.pop(pending.ip)
+        self._extract_host_addresses(pending)
+        self._pending.pop(pending.host)
         self.topology.update_device(pending.device)
-
-    def _extract_neighbors(self, pending):
-        for neighbor in pending.device.neighbors:
-            _pending = PendingDevice(
-                auth_methods=self.auth_methods.copy(),
-                ip=neighbor.ip,
-                hostname=neighbor.hostname,
-                sysinfo=neighbor.sysinfo,
-            )
-            self._hopper.append(_pending)
-
-    def _extract_ip_addresses(self, pending):
-        for ip_address in pending.device.ip_addresses:
-            self._known_ips.add(ip_address.address)

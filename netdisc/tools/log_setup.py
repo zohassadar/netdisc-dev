@@ -9,14 +9,14 @@ BASIC_FORMAT = dict(
 )
 
 DEBUG_FORMAT = dict(
-    fmt="{asctime} - {name}:{levelname:<8}:{funcName}:{lineno} - {message}",
+    fmt="{asctime} - {name}:{levelname:<8}:{threadName}:{funcName}:{lineno} - {message}",
     style="{",
     datefmt="%Y-%m-%d %H:%M:%S",
     validate=True,
 )
 
 DEBUG_FORMAT_FILENAME = dict(
-    fmt="{pathname}\n{asctime} - {name}:{levelname:<8}:{funcName}:{lineno} - {message}",
+    fmt="{pathname}\n{asctime} - {name}:{levelname:<8}:{threadName}:{funcName}:{lineno} - {message}",
     style="{",
     datefmt="%Y-%m-%d %H:%M:%S",
     validate=True,
@@ -68,6 +68,7 @@ def get_log_level(level: int) -> int:
 
 def set_logger(
     verbose: int = logging.NOTSET,
+    debug=False,
     log_file: str = None,
     log_file_level: int = logging.NOTSET,
     log_file_mb: int = 10,
@@ -77,6 +78,8 @@ def set_logger(
     if modules is None:
         modules = []
     logger = logging.getLogger()
+    while logger.handlers:
+        logger.handlers.pop()
     stream_level = get_log_level(verbose)
     file_level = get_log_level(log_file_level)
     logger.setLevel(min(stream_level, file_level))
@@ -88,6 +91,9 @@ def set_logger(
 
     log_format = BASIC_FORMAT
     if stream_level is logging.DEBUG:
+        log_format = DEBUG_FORMAT
+
+    if debug:
         log_format = DEBUG_FORMAT
     handler.setFormatter(logging.Formatter(**log_format))
     logger.addHandler(handler)

@@ -1,27 +1,41 @@
+import collections
 import json
 import logging
-import collections
+import typing
 import netdisc.snmp.discover
-from netdisc.base import constant, device, abstract
+from netdisc.base import abstract, constant, device_base
 from netdisc.tools import helpers
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-DISCOVERY_MAP = dict()
-# DISCOVERY_MAP[constant.Proto.API] = apidisc.api_discover
-# DISCOVERY_MAP[constant.Proto.TELNET] = sshdisc.telnet_discover
-# DISCOVERY_MAP[constant.Proto.SSH] = sshdisc.ssh_discover
-DISCOVERY_MAP[constant.Proto.SNMPv3] = netdisc.snmp.discover.snmp_discover
+def get_discovery(proto: constant.Proto) -> typing.Callable:
+    def unsupported(**kwargs):
+        ip = kwargs.get("ip")
+        return device_base.Device(
+            device_ip=ip,
+            failed=True,
+            failure_reason=f"{proto} unsupported",
+        )
+
+    match proto:
+        case constant.Proto.SNMPv3:
+            return netdisc.snmp.discover.snmp_discover
+        case constant.Proto.SNMPv2c:
+            return netdisc.snmp.discover.snmp_discover
+        case _:
+            return unsupported
 
 
 class TaskRequest(
-    collections.namedtuple("TaskRequest", "ip, proto, kwargs, hostname, sysinfo, extra")
+    collections.namedtuple(
+        "TaskRequest", "host, proto, kwargs, hostname, sysinfo, extra"
+    )
 ):
     def __new__(
         cls,
-        ip: str,
+        host: str,
         proto: str | constant.Proto,
         kwargs: dict,
         hostname: str | None,
@@ -57,13 +71,13 @@ class TaskRequest(
         except TypeError:
             raise ValueError("extra dict must be json serializable")
 
-        return super().__new__(cls, ip, proto, kwargs, hostname, sysinfo, extra)
+        return super().__new__(cls, host, proto, kwargs, hostname, sysinfo, extra)
 
 
-class TaskResponse(collections.namedtuple("TaskResponse", "ip, dumped")):
+class TaskResponse(collections.namedtuple("TaskResponse", "host, dumped")):
     def __new__(
         cls,
-        ip: str,
+        host: str,
         dumped: dict,
     ):
         if not isinstance(dumped, dict):
@@ -72,18 +86,21 @@ class TaskResponse(collections.namedtuple("TaskResponse", "ip, dumped")):
             json.dumps(dumped)
         except TypeError:
             raise ValueError("dumped_device must be JSON serializable")
-        return super().__new__(cls, ip, dumped)
+        return super().__new__(cls, host, dumped)
 
 
-@helpers.debugger(logging.CRITICAL)
-def do_task(task: TaskRequest) -> TaskResponse:
+def discovery_dispatch(task: TaskRequest) -> TaskResponse:
+    task = TaskRequest(*task)
+    logging.debug("Received request: host=%s, hostname=%s", task.host, task.hostname)
     proto = constant.Proto(task.proto)
-    discoverer = DISCOVERY_MAP[proto]
+    discoverer = get_discovery(proto)
     device = discoverer(
-        ip=task.ip,
+        host=task.host,
         hostname=task.hostname,
         sysinfo=task.sysinfo,
-        kwargs=task.kwargs,
         extra=task.extra,
+        **task.kwargs,
     )
-    return TaskResponse(task.ip, device)
+    if hasattr(device, "dump"):
+        device = device.dump()
+    return TaskResponse(task.host, device)

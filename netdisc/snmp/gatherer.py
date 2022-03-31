@@ -67,7 +67,9 @@ class SNMPGeneric(abstract.Gatherer):
 
     def get_device(self):
         snmpv2_result = self.object_cache_get(snmpbase.SNMPv2)
-        return apply_mapping(snmpv2_result, SNMPv2_MAP, {})
+        result = apply_mapping(snmpv2_result, SNMPv2_MAP, {})
+        result["device_ip"] = self.engine.host
+        return result
 
     def get_interfaces(self):
         results = []

@@ -58,7 +58,7 @@ parser.add_argument(
 args = parser.parse_args()
 if __name__ == "__main__":
     args = parser.parse_args()
-    log_setup.set_logger(args.verbose)
+    log_setup.set_logger(2, debug=True)
     from netdisc.snmp import gatherer, pyeng, mibhelp, easyeng, snmpbase
     from netdisc.discover import dischelp
 

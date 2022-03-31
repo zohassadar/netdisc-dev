@@ -1,4 +1,4 @@
-from netdisc.base import device, abstract
+from netdisc.base import abstract, device_base
 
 
 def gather_and_test(
@@ -21,9 +21,9 @@ def gather_and_test(
     result["vrfs"] = gatherer.get_vrfs()
 
     exception = None
-    device.Device().load(result)
+    device_base.Device().load(result)
     try:
-        device.Device().load(result) if not disabled else None
+        device_base.Device().load(result) if not disabled else None
     except ValueError as exc:
         exception = exc
     return exception, result

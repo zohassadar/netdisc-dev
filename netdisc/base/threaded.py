@@ -1,103 +1,90 @@
-import threading
-import queue
 import logging
+import queue
+import threading
+import time
 import typing
-from netdisc.base import abstract
-from netdisc.tools import helpers
+
+import logging
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class WorkerThread(threading.Thread):
     def __init__(
         self,
+        worker: typing.Callable,
+        timeout: int,
         index: int,
-        task_doer: typing.Callable,
         input: queue.Queue,
         output: queue.Queue,
-        timeout: int,
-        *args,
-        **kwargs,
     ):
+        super().__init__(name=f"{worker.__name__}_Thread{index:02d}")
+        self.worker = worker
+        self.timeout = timeout
         self.index = index
-        self.task_doer = task_doer
-        self.__name__ = f"Thread{self.index:02d} ({self.task_doer.__name__})"
         self.input = input
         self.output = output
-        self.timeout = timeout
-        self.finished = False
-        super().__init__(*args, **kwargs)
+        self.stop = False
+        logger.debug("Instantiated")
 
     def run(self):
+        logger.debug("Running")
         while True:
-            if self.finished:
+            if self.stop:
                 logging.info("Thread %s: Finished", self.index)
                 break
             try:
                 work = self.input.get(timeout=self.timeout)
-                logging.critical(
-                    "%s: %s is being called with: %s",
-                    self.__name__,
-                    self.task_doer.__name__,
-                    work,
-                )
-                result = self.task_doer(work)
-                self.output.put(result)
-                logging.critical(
-                    "%s: Work is ending",
-                    self.__name__,
-                )
-                self.input.task_done()
             except queue.Empty:
-                pass
+                continue
+            result = self.worker(work)
+            self.output.put(result)
+            self.input.task_done()
 
 
-class ThreadedQueue(abstract.QueueBase):
-    def __init__(self, task_doer: typing.Callable, workers: int, worker_timeout: int):
-        self.task_doer = task_doer
-        self.input_queue = queue.Queue()
-        self.output_queue = queue.Queue()
-        self.workers = workers
-        self._workers = []
-        for index in range(self.workers):
+class WorkerPoolThread(threading.Thread):
+    def __init__(
+        self,
+        worker: typing.Callable,
+        timeout: int,
+        max_workers: int,
+    ):
+        super().__init__(name=type(self).__name__)
+        self.worker = worker
+        self.timeout = timeout
+        self.max_workers = max_workers
+        self.input = queue.Queue()
+        self.output = queue.Queue()
+        self.stop = False
+        self._workers: list[WorkerThread] = []
+        for index in range(self.max_workers):
             worker = WorkerThread(
-                index,
-                task_doer,
-                self.input_queue,
-                self.output_queue,
-                worker_timeout,
+                worker=self.worker,
+                timeout=self.timeout,
+                index=index,
+                input=self.input,
+                output=self.output,
             )
-            worker.start()
             self._workers.append(worker)
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.workers=})"
-
-    def __str__(self):
-        return repr(self)
+        logger.debug("Instantiated")
 
     def __enter__(self):
+        logger.debug("Starting Workers")
+        for worker in self._workers:
+            worker.start()
+        self.start()
         return self
 
-    def __exit__(self, type, value, traceback):
-        if type:
-            logging.error("Type: %s, Value: %s, Traceback: %s", type, value, traceback)
-        else:
-            logging.info("Normal exit condition")
-        self.close()
-
-    def close(self):
+    def __exit__(self, *exc):
         for worker in self._workers:
-            worker.finished = True
-        self.input_queue = None
-        self.output_queue = None
+            worker.stop = True
+        self.stop = True
+        logger.debug("Stopping Workers")
 
-    @helpers.debugger(logging.CRITICAL)
-    def put(self, *args, **kwargs):
-        return self.input_queue.put(*args, **kwargs)
-
-    @helpers.debugger(logging.CRITICAL)
-    def get(self, *args, **kwargs):
-        return self.output_queue.get(*args, **kwargs)
-
-    @helpers.debugger(logging.CRITICAL)
-    def empty(self):
-        return self.output_queue.empty()
+    def run(self):
+        logger.debug("Starting")
+        while True:
+            if self.stop:
+                break
+            time.sleep(self.timeout)

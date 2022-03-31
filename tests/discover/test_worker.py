@@ -1,6 +1,6 @@
 from netdisc.discover import worker
 
-from netdisc.base import constant, device
+from netdisc.base import constant, device_base
 import pytest
 
 

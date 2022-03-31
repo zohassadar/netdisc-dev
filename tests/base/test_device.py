@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 import pytest
-from netdisc.base.device import IP, Interface, Neighbor, Route
+from netdisc.base.device_base import IP, Interface, Neighbor, Route
 
 from tests.device_fixtures import (
     device_1_interface_2,
@@ -20,7 +20,7 @@ def filter_nones(kvpairs):
 
 @pytest.fixture
 def Device():
-    from netdisc.base.device import Device
+    from netdisc.base.device_base import Device
 
     return Device
 

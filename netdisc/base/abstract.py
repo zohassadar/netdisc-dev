@@ -2,7 +2,7 @@
 Copyright 2022 Richard Dodson
 """
 import abc
-from netdisc.base import device
+from netdisc.base import device_base
 
 
 class Gatherer(abc.ABC):
@@ -51,51 +51,18 @@ class TopologyBase(abc.ABC):
     """Interact with the discovered topology"""
 
     @abc.abstractmethod
-    def get_device(
-        self,
-        ip,
-    ) -> device.Device:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def delete_device(
-        self,
-        dev: device.Device,
-    ) -> None:
-        raise NotImplementedError
-
-    @abc.abstractmethod
     def update_device(
         self,
-        dev: device.Device,
+        device: device_base.Device,
     ) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def check_device_ip(
-        self,
-        ip: str,
-    ) -> bool:
-        raise NotImplementedError
-
-
-class QueueBase(abc.ABC):
-    """Queueing solution"""
-
-    @abc.abstractmethod
-    def empty(self):
+    def __enter__(self):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get(self):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def put(self, task):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def close(self):
+    def __exit__(self, *exc):
         raise NotImplementedError
 
 

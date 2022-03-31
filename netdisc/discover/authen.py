@@ -39,68 +39,68 @@ class AuthMethod:
             case (
                 str(),  # username
                 str(),  # password
-                None,  # secret
-                None,  # community
-                None,  # snmpuser
-                None,  # authtype
-                None,  # auth
-                None,  # priv
-                None,  # privtype
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
             ):
                 pass
             case (
                 str(),  # username
                 str(),  # password
                 str(),  # secret
-                None,  # community
-                None,  # snmpuser
-                None,  # authtype
-                None,  # auth
-                None,  # priv
-                None,  # privtype
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
             ):
                 pass
             case (
-                None,  # username
-                None,  # password
-                None,  # secret
+                None,
+                None,
+                None,
                 str(),  # community
-                None,  # snmpuser
-                None,  # authtype
-                None,  # auth
-                None,  # priv
-                None,  # privtype
+                None,
+                None,
+                None,
+                None,
+                None,
             ):
                 pass
             case (
-                None,  # username
-                None,  # password
-                None,  # secret
-                None,  # community
+                None,
+                None,
+                None,
+                None,
                 str(),  # snmpuser
-                None,  # authtype
-                None,  # auth
-                None,  # priv
-                None,  # privtype
+                None,
+                None,
+                None,
+                None,
             ):
                 pass
             case (
-                None,  # username
-                None,  # password
-                None,  # secret
-                None,  # community
+                None,
+                None,
+                None,
+                None,
                 str(),  # snmpuser
                 str(),  # authtype
                 str(),  # auth
-                None,  # priv
-                None,  # privtype
+                None,
+                None,
             ):
                 pass
             case (
-                None,  # username
-                None,  # password
-                None,  # secret
-                None,  # community
+                None,
+                None,
+                None,
+                None,
                 str(),  # snmpuser
                 str(),  # authtype
                 str(),  # auth

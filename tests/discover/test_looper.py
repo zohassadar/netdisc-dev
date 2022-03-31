@@ -5,7 +5,7 @@ import threading
 import contextlib
 import collections
 import pytest
-from netdisc.base import constant, device, topology
+from netdisc.base import constant, device_base, topology
 from netdisc.discover import authen, looper, worker
 
 logger = logging.getLogger(__name__)
@@ -92,17 +92,17 @@ def neighbor_set_3():
 
 @pytest.fixture
 def device_authentication_failure():
-    return device.Device(authentication_failure=True)
+    return device_base.Device(authentication_failure=True)
 
 
 @pytest.fixture
 def device_failure():
-    return device.Device(failed=True)
+    return device_base.Device(failed=True)
 
 
 @pytest.fixture
 def device_1(ip_address_set_1, neighbor_set_1):
-    _device = device.Device(device_ip="192.168.11.11")
+    _device = device_base.Device(device_ip="192.168.11.11")
     _device["interfaces"] = ip_address_set_1
     _device["neighbors"] = neighbor_set_1
     return _device
@@ -110,7 +110,7 @@ def device_1(ip_address_set_1, neighbor_set_1):
 
 @pytest.fixture
 def device_2(ip_address_set_2, neighbor_set_2):
-    _device = device.Device()
+    _device = device_base.Device()
     _device["interfaces"] = ip_address_set_2
     _device["neighbors"] = neighbor_set_2
     return _device
@@ -118,7 +118,7 @@ def device_2(ip_address_set_2, neighbor_set_2):
 
 @pytest.fixture
 def device_3(ip_address_set_3, neighbor_set_3):
-    _device = device.Device()
+    _device = device_base.Device()
     _device["interfaces"] = ip_address_set_3
     _device["neighbors"] = neighbor_set_3
     return _device
@@ -140,7 +140,7 @@ def get_fake_worker():
             self.discovery_q = discovery_q
             self.discovered_q = discovered_q
             self.stopped = False
-            self.lookup_dict = collections.defaultdict(device.Device)
+            self.lookup_dict = collections.defaultdict(device_base.Device)
 
         def run(self):
             while not self.stopped:
