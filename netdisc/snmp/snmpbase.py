@@ -236,7 +236,11 @@ class LLDPNeighIdx:
     def __post_init__(self):
         test_number = str(self.number)
         if self.NEEDS_CONVERTED(test_number):
-            number, lldp_if, neighbor = tuple(map(int, test_number.split(".")))
+            split_up = tuple(map(int, test_number.split(".")))
+            if len(split_up) != 3:
+                logger.error("Unexpected LLDP Neigh Index: %s", self.number)
+                return
+            number, lldp_if, neighbor = split_up
             object.__setattr__(self, "number", number)
             object.__setattr__(self, "lldp_if", lldp_if)
             object.__setattr__(self, "neighbor", neighbor)

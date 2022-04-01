@@ -110,14 +110,21 @@ class EasySNMPEngine(engine.SNMPEngine):
         *paths,
     ):
         logger.debug("%s _get invoked: %s", type(self), paths)
+        error = None
         results = []
         try:
             results = self._session.get(
                 list(paths),
             )
-        except easysnmp.exceptions.EasySNMPError:
-            logger.error("Error attempting to get: %s", "".join(paths))
-        return results
+        except easysnmp.exceptions.EasySNMPError as exc:
+            logger.error(
+                "%s Error: %s %s",
+                self.host,
+                "".join(paths),
+                str(exc),
+            )
+            error = str(exc)
+        return error, results
 
     def get(
         self,
@@ -125,10 +132,10 @@ class EasySNMPEngine(engine.SNMPEngine):
     ) -> list[tuple[typing.Any, str, typing.Any]]:
         logger.debug("%s get invoked: %s", type(self), paths)
 
-        results = self._get(*paths)
+        error, results = self._get(*paths)
         logger.debug("%s received %s results", type(self), len(results))
         self.debug_dumper.dump(self.host, results, *paths)
-        processed = self._process_results(results)
+        processed = self._process_results(error, results)
         logger.debug(
             "%s received %s results after processing", type(self), len(processed)
         )
@@ -139,23 +146,30 @@ class EasySNMPEngine(engine.SNMPEngine):
         *paths,
     ):
         logger.debug("%s _walk invoked: %s", type(self), paths)
+        error = None
         results = []
         try:
             results = self._session.bulkwalk(
                 list(paths),
             )
-        except easysnmp.exceptions.EasySNMPError:
-            logger.error("Error attempting to walk: %s", "".join(paths))
-        return results
+        except easysnmp.exceptions.EasySNMPError as exc:
+            logger.error(
+                "%s Error: %s %s",
+                self.host,
+                "".join(paths),
+                str(exc),
+            )
+            error = str(exc)
+        return error, results
 
     def walk(
         self,
         *paths,
     ) -> list[tuple[typing.Any, str, typing.Any]]:
-        results = self._walk(*paths)
+        error, results = self._walk(*paths)
         logger.debug("%s received %s results", type(self), len(results))
         self.debug_dumper.dump(self.host, results, *paths)
-        processed = self._process_results(results)
+        processed = self._process_results(error, results)
         logger.debug(
             "%s received %s results after processing", type(self), len(processed)
         )
@@ -186,8 +200,14 @@ class EasySNMPEngine(engine.SNMPEngine):
         return value
 
     def _process_results(
-        self, results: list[easysnmp.SNMPVariable]
+        self, error: None | str, results: list[easysnmp.SNMPVariable]
     ) -> list[tuple[typing.Any, str, typing.Any]]:
+        if error:
+            logger.error(
+                "Error encountered: %s",
+                error,
+            )
+            raise RuntimeError(f"EasyEng error: {error}")
         processed = []
         for result in results:
             # error check?
