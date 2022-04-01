@@ -7,7 +7,9 @@ import pytest
 def test_task_request_valid_proto():
     args = ["1.1.1.1", constant.Proto.API, {}, 4, 5, {}]
     result = worker.TaskRequest(*args)
-    assert list(result) == args
+    aslist = list(result)
+    aslist[1] = constant.Proto(aslist[1])
+    assert aslist == args
 
 
 def test_task_request_valid_proto_str():
@@ -16,7 +18,7 @@ def test_task_request_valid_proto_str():
     resultlist = list(result)
     assert resultlist[0] == args[0]
     assert resultlist[2:] == args[2:]
-    assert resultlist[1] is constant.Proto.API
+    assert constant.Proto(resultlist[1]) is constant.Proto.API
 
 
 def test_task_request_invalid_proto_int():
