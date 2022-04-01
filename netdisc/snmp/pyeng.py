@@ -237,19 +237,30 @@ class PySNMPEngine(engine.SNMPEngine):
 
     def _process_index(self, oid, var_bind):
         logging.debug(
-            "Received index with: oid=%s var_bind=%s",
+            "%s: Received index with: oid=%s var_bind=%s",
+            self.host,
             oid,
             var_bind,
         )
         mib, field, indices = oid.getMibSymbol()
-        logger.debug("Processing index result for %s::%s", mib, field)
+        logger.debug(
+            "%s: Processing index result for %s::%s",
+            self.host,
+            mib,
+            field,
+        )
         indices_results = []
         if not indices:
             return
         for index in indices:
             class_repr = repr(type(index))
             printed = index.prettyPrint()
-            logger.debug("Index of type %s pretty prints to: %s", class_repr, printed)
+            logger.debug(
+                "%s: Index of type %s pretty prints to: %s",
+                self.host,
+                class_repr,
+                printed,
+            )
             if 1 == 2:
                 pass
             elif isinstance(index, pysnmp.proto.rfc1902.ObjectName):
@@ -257,12 +268,17 @@ class PySNMPEngine(engine.SNMPEngine):
             elif class_repr == "<class 'AddressFamilyNumbers'>":
                 indices_results.append(printed)
             elif class_repr == "<class 'LldpManAddress'>":
-                indices_results.append(socket.inet_ntoa(index.asOctets()))
+                as_octets = index.asOctets()
+                if len(as_octets) == 4:
+                    indices_results.append(socket.inet_ntoa(as_octets))
+                else:
+                    oid_str = ".".join(map(str, oid.getOid().asTuple()))
+                    logger.error(f"{self.host} Invalid IP {as_octets}: {oid_str}")
+                    indices_results.append(printed)
             else:
                 logger.debug("Index Processing.  Unknown index type: %s", class_repr)
                 indices_results.append(printed)
 
-                # indices_results.append(label)
         indices_results = [int(i) if i.isdigit() else i for i in indices_results]
         index_length = len(indices_results)
         if index_length == 1:

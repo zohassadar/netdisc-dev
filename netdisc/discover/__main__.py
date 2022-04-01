@@ -30,3 +30,6 @@ if __name__ == "__main__":
             discovered_q=pool.output,
         )
         runner.loop()
+        import pprint
+
+        pprint.pp(runner._pending)

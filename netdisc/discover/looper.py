@@ -14,8 +14,10 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 import collections
 import dataclasses
+import ipaddress
 import logging
 import queue
+
 from netdisc.base import abstract, device_base
 from netdisc.discover import authen, worker
 
@@ -221,6 +223,11 @@ class DiscoveryRunner:
         logger.info("extracting neighbors from %s", pending.host)
         for neighbor in pending.device.neighbors:
             if not neighbor.ip:
+                continue
+            try:
+                ipaddress.IPv4Address(neighbor.ip)
+            except Exception as exc:
+                logger.critical("%s %s", type(exc), str(exc))
                 continue
             _pending = PendingDevice(
                 auth_methods=self.auth_methods.copy(),
