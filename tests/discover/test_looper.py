@@ -204,6 +204,9 @@ def auths():
 @pytest.fixture
 def topology():
     class FakeTopology:
+        total = 0
+        total_successful = 0
+
         def __init__(self):
             self.results = []
 

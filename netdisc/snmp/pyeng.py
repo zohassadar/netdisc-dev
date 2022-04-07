@@ -274,7 +274,7 @@ class PySNMPEngine(engine.SNMPEngine):
                 else:
                     oid_str = ".".join(map(str, oid.getOid().asTuple()))
                     logger.error(f"{self.host} Invalid IP {as_octets}: {oid_str}")
-                    indices_results.append(printed)
+                    return
             else:
                 logger.debug("Index Processing.  Unknown index type: %s", class_repr)
                 indices_results.append(printed)
@@ -338,6 +338,8 @@ class PySNMPEngine(engine.SNMPEngine):
         results = []
         for oid, var_bind in var_binds:
             index = self._process_index(oid, var_bind)
+            if index is None:
+                continue
             label, value = self._process_var_bind(oid, var_bind)
             if not isinstance(label, str):
                 raise ValueError(

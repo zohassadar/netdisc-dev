@@ -60,7 +60,7 @@ class DiscoveryRunner:
     interactive: interactive.InteractiveNeighborFilter = None
     # outputs: list[abstract.OutputBase]
     loop_forever: bool = False
-    max_loops: int = 10
+    max_loops: int = 60
     loop_sleep: int = 1
 
     def loop(self):
@@ -123,12 +123,14 @@ class DiscoveryRunner:
         _hopper_l = len(self._hopper)
         _result = bool(_pending_l + _discovery_l + _discovered_l + _hopper_l)
         logger.info(
-            "Q Stats: Idle: %s Pending: %s, Pre: %s Post: %s Hopper: %s",
+            "Q Stats: Idle: %s Pending: %s, Pre: %s Post: %s Hopper: %s Completed: %s Successful: %s",
             self._idle_count,
             _pending_l,
             _discovery_l,
             _discovered_l,
             _hopper_l,
+            self.topology.total,
+            self.topology.total_successful,
         )
         if not _result and self.loop_forever:
             logger.info("Discovery complete.  Starting over.")
@@ -195,7 +197,6 @@ class DiscoveryRunner:
         try:
             response = self.discovered_q.get(timeout=self.loop_sleep)
         except queue.Empty:
-            logger.info("Nothing complete in the discovered queue")
             return
         self._not_dead()
         _response = worker.TaskResponse(*response)

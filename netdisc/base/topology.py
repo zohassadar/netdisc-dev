@@ -12,6 +12,14 @@ class MemoryTopology(abstract.TopologyBase):
         self._devices: typing.Dict[str, device_base.Device] = {}
 
     @property
+    def total(self):
+        return len(self._devices)
+
+    @property
+    def total_successful(self):
+        return len([d for d in self._devices.values() if not d.failed])
+
+    @property
     def yamlable(self):
         results = {}
         for ip, device in self._devices.items():

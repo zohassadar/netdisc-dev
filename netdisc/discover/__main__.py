@@ -3,7 +3,7 @@ import argparse
 import pathlib
 from netdisc.base import threaded, topology
 from netdisc.discover import authen, looper, worker
-from netdisc.snmp import snmpargs
+from netdisc.snmp import snmpargs, pyeng, easyeng, snmpbase, mibhelp
 from netdisc.tools import log_setup, pandor, interactive
 
 logger = logging.getLogger(__name__)
@@ -43,25 +43,33 @@ for_help_only = argparse.ArgumentParser(
     parents=[
         log_setup.log_parser,
         snmpargs.parser,
+        snmpargs.debug_parser,
         args,
     ],
 )
-for_help_only.parse_args()
 
 
 if __name__ == "__main__":
-    print("running!")
+    for_help_only.parse_args()
     (parsed_snmp, remaining) = snmpargs.parser.parse_known_args()
-    (parsed_discover, _) = args.parse_known_args(remaining)
+    (parsed_discover, _) = args.parse_known_args()
+    (snmp_debug, _) = snmpargs.debug_parser.parse_known_args()
     args = vars(parsed_snmp).copy()
     log_setup.set_logger_from_args()
     hostlist = [args.pop("host")]
+
+    # engine = snmp_debug.snmp_engine
+    # if engine is pyeng.PySNMPEngine:
+    #     helper = mibhelp.MIBHelper(flags=snmpbase.MIBXlate.PYSNMP)
+    # elif engine is easyeng.EasySNMPEngine:
+    #     helper = mibhelp.MIBHelper(flags=snmpbase.MIBXlate.EASYSNMP)
+    # loaded_engine = engine(mib_helper=helper, **kwargs)
 
     auths = authen.AuthMethodList()
     auths.load_authentication_methods(dict(from_cli=args))
     with (
         topology.MemoryTopology() as topo,
-        threaded.WorkerPoolThread(worker.discovery_dispatch, 1, 2) as pool,
+        threaded.WorkerPoolThread(worker.discovery_dispatch, 1, 20) as pool,
     ):
 
         # pool = threaded.WorkerPoolThread(worker.discovery_dispatch, 1, 2).__enter__()

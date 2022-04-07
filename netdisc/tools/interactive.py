@@ -129,7 +129,7 @@ class PrintOutputTable:
 
     def _print_row(self, fieldvalues):
         for field in self._fieldnames:
-            value = helpers.debug_shorten(str(fieldvalues[field]), self.shorten)
+            value = helpers.debug_shorten(str(fieldvalues.get(field, "")), self.shorten)
             print(value.ljust(self._column_widths[field]), end="")
         print("")
 
