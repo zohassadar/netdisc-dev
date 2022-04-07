@@ -412,3 +412,23 @@ class MACTableEntry(WalkRequired):
         ),
         default=None,
     )
+
+
+@dataclasses.dataclass(frozen=True)
+class IPEntryIndex:
+    ip: str = None
+
+
+class IPAddressesDict(dict):
+    @functools.cached_property
+    def ip_addresses_by_address(self) -> dict[str, IPAddressEntry]:
+        return {idx.ip: ip_address for idx, ip_address in self.items()}
+
+
+@dataclasses.dataclass
+class IPAddressEntry(WalkRequired):
+    CONTAINER = IPAddressesDict
+    INDEX = IPEntryIndex
+    MIB = "IP-MIB"
+    ipAdEntIfIndex: str = None
+    ipAdEntNetMask: str = None

@@ -1,7 +1,7 @@
 import dataclasses
-from xml.dom.minidom import Attr
 from netdisc.snmp import engine, snmpbase
 from netdisc.base import abstract
+from netdisc.discover import dischelp
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -55,7 +55,7 @@ def apply_mapping(binding: snmpbase.VarBindBase, mapping: dict, result: dict) ->
 
 
 @dataclasses.dataclass
-class SNMPGeneric(abstract.Gatherer):
+class SNMPGeneric(dischelp.GatherBase):
     engine: engine.SNMPEngine
 
     def __post_init__(self):
@@ -127,7 +127,22 @@ class SNMPGeneric(abstract.Gatherer):
         return []
 
     def get_ip_addresses(self) -> list[dict[str, str | int | bool]]:
-        return []
+        results = []
+        ifmib_results: snmpbase.InterfaceDict = self.object_cache_get(snmpbase.IFMIB)
+        ip_addresses: snmpbase.IPAddressesDict = self.object_cache_get(
+            snmpbase.IPAddressEntry
+        )
+        for ip_idx, ip_address in ip_addresses.items():
+            result = dict(device_ip=self.device_ip)
+            interface = ifmib_results.interfaces_by_if_index.get(
+                ip_address.ipAdEntIfIndex
+            )
+            if interface:
+                result["interface_name"] = interface.ifDescr
+            result["address"] = ip_idx.ip
+            result["mask_len"] = ip_address.ipAdEntNetMask
+            results.append(result)
+        return results
 
     def get_ipv6_addresses(self) -> list[dict[str, str | int | bool]]:
         return []

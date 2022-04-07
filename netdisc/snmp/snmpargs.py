@@ -1,6 +1,6 @@
 import argparse
 
-parser = argparse.ArgumentParser(prog="netdisc.snmp")
+parser = argparse.ArgumentParser(prog="netdisc.snmp", add_help=False)
 parser.add_argument(
     "-c",
     "--community",
@@ -41,14 +41,4 @@ parser.add_argument(
     "host",
     type=str,
     help="Hostname of endpoint",
-)
-
-
-# This shouldn't be defined here.
-parser.add_argument(
-    "-v",
-    "--verbose",
-    action="count",
-    default=0,
-    help="Logging verbosity.  -v through -vvvvv",
 )

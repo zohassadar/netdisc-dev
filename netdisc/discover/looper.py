@@ -8,7 +8,7 @@ N = Neighbor (discovered host
 
 
 """
-
+from __future__ import annotations
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -17,9 +17,10 @@ import dataclasses
 import ipaddress
 import logging
 import queue
-
+from netdisc.tools import pandor
 from netdisc.base import abstract, device_base
 from netdisc.discover import authen, worker
+from netdisc.tools import interactive
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -54,7 +55,9 @@ class DiscoveryRunner:
     discovered_q: queue.Queue = dataclasses.field(
         default_factory=queue.Queue,
     )
-    # filters: list[abstract.FilterBase]
+    filter: pandor.FilterAbstract = None
+
+    interactive: interactive.InteractiveNeighborFilter = None
     # outputs: list[abstract.OutputBase]
     loop_forever: bool = False
     max_loops: int = 10
@@ -221,7 +224,16 @@ class DiscoveryRunner:
 
     def _extract_neighbors(self, pending):
         logger.info("extracting neighbors from %s", pending.host)
-        for neighbor in pending.device.neighbors:
+        _pre_filtered = [
+            neighbor
+            for neighbor in pending.device.neighbors
+            if self.filter.filter(neighbor)
+        ]
+        _filtered = _pre_filtered
+        if self.interactive:
+            _filtered = self.interactive.filter(pending.device, _pre_filtered)
+
+        for neighbor in _filtered:
             if not neighbor.ip:
                 continue
             try:

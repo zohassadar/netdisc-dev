@@ -1,9 +1,17 @@
+import argparse
 import dataclasses
 import logging
 import logging.handlers
+import pathlib
 
 BASIC_FORMAT = dict(
     fmt="{levelname:<8}: {message}",
+    style="{",
+    validate=True,
+)
+
+BASIC_FORMAT_FILENAME = dict(
+    fmt="{pathname}\n{levelname:<8}: {message}",
     style="{",
     validate=True,
 )
@@ -23,6 +31,55 @@ DEBUG_FORMAT_FILENAME = dict(
 )
 
 
+log_parser = argparse.ArgumentParser(description="Debug Options", add_help=False)
+log_parser.add_argument(
+    "-v",
+    "--verbose",
+    action="count",
+    default=0,
+    help="Logging verbosity.  -v through -vvvvv",
+)
+
+log_parser.add_argument(
+    "--debug-file",
+    type=str,
+    help="Debug output file",
+)
+
+log_parser.add_argument(
+    "--debug-file-level",
+    type=int,
+    default=5,
+    help="Debug file level.  1-5.  Default 5",
+)
+
+log_parser.add_argument(
+    "--debug-file-size",
+    type=int,
+    default=10,
+    help="Size in MB of debug file.  Default 10",
+)
+
+log_parser.add_argument(
+    "--debug-file-depth",
+    type=int,
+    default=1,
+    help="Number of archived debug files.  Minimum 1.  Default 1.",
+)
+
+log_parser.add_argument(
+    "--include-path",
+    action="store_true",
+    help="Include entire module path in debug output",
+)
+
+log_parser.add_argument(
+    "--modules",
+    nargs="+",
+    help="Limit logging to module(s)",
+)
+
+
 @dataclasses.dataclass
 class FilterLogByModules:
     modules: list[str] = dataclasses.field(default_factory=list)
@@ -30,18 +87,18 @@ class FilterLogByModules:
     def __post_init__(self):
         self._filtered = {}
 
-    def is_name_filtered(self, name: str) -> bool:
+    def _is_name_filtered(self, name: str) -> bool:
         if not self.modules:
             return True
-        for module in name.split("."):
-            if module in self.modules:
+        for module in self.modules:
+            if module in name:
                 return True
         return False
 
     def filter(self, record: logging.LogRecord) -> bool:
         return self._filtered.setdefault(
             record.name,
-            self.is_name_filtered(record.name),
+            self._is_name_filtered(record.name),
         )
 
 
@@ -74,6 +131,7 @@ def set_logger(
     log_file_mb: int = 10,
     log_file_depth: int = 1,
     modules: list = None,
+    include_path: bool = False,
 ):
     if modules is None:
         modules = []
@@ -89,12 +147,15 @@ def set_logger(
     handler.addFilter(log_filter)
     handler.setLevel(stream_level)
 
-    log_format = BASIC_FORMAT
-    if stream_level is logging.DEBUG:
+    if (stream_level is logging.DEBUG or debug) and include_path:
+        log_format = DEBUG_FORMAT_FILENAME
+    elif stream_level is logging.DEBUG or debug:
         log_format = DEBUG_FORMAT
+    elif include_path:
+        log_format = BASIC_FORMAT_FILENAME
+    else:
+        log_format = BASIC_FORMAT
 
-    if debug:
-        log_format = DEBUG_FORMAT
     handler.setFormatter(logging.Formatter(**log_format))
     logger.addHandler(handler)
 
@@ -109,3 +170,19 @@ def set_logger(
         file_handler.addFilter(log_filter)
         file_handler.setFormatter(logging.Formatter(**DEBUG_FORMAT_FILENAME))
         logger.addHandler(file_handler)
+
+    if logger.level > logging.CRITICAL:
+        logger.disabled = True
+
+
+def set_logger_from_args():
+    (parsed, _) = log_parser.parse_known_args()
+    set_logger(
+        verbose=parsed.verbose,
+        log_file=parsed.debug_file,
+        log_file_level=parsed.debug_file_level,
+        log_file_mb=parsed.debug_file_size,
+        log_file_depth=parsed.debug_file_depth,
+        modules=parsed.modules,
+        include_path=parsed.include_path,
+    )
