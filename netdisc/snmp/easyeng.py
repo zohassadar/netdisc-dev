@@ -14,7 +14,7 @@ import easysnmp
 import easysnmp.exceptions
 
 from netdisc.tools import helpers
-from netdisc.snmp import engine
+from netdisc.snmp import engine, snmpbase
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -29,6 +29,7 @@ EASY_DEBUG_OUTPUT = os.getenv("EASY_DEBUG_OUTPUT")
 
 class EasySNMPEngine(engine.SNMPEngine):
     __doc__ = engine.SNMPEngine.__doc__
+    FLAGS = snmpbase.MIBXlate.EASYSNMP
 
     def __init__(self, *args, **kwargs):
         self._kwargs = {}
@@ -116,7 +117,7 @@ class EasySNMPEngine(engine.SNMPEngine):
             results = self._session.get(
                 list(paths),
             )
-        except easysnmp.exceptions.EasySNMPError as exc:
+        except (easysnmp.exceptions.EasySNMPError, SystemError) as exc:
             logger.error(
                 "%s Error: %s %s",
                 self.host,
@@ -152,7 +153,7 @@ class EasySNMPEngine(engine.SNMPEngine):
             results = self._session.bulkwalk(
                 list(paths),
             )
-        except easysnmp.exceptions.EasySNMPError as exc:
+        except (easysnmp.exceptions.EasySNMPError, SystemError) as exc:
             logger.error(
                 "%s Error: %s %s",
                 self.host,

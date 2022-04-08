@@ -1,15 +1,15 @@
 import argparse
-from netdisc.snmp import pyeng, snmpbase
-
-PYSNMP = "pysnmp"
-EASYSNMP = "easysnmp"
+from netdisc.snmp import pyeng, snmpbase, discover
 
 
 def get_snmpbase_objects():
     results = []
     for attr in dir(snmpbase):
         obj = getattr(snmpbase, attr)
-        if isinstance(obj, type) and issubclass(obj, snmpbase.VarBindBase):
+        if isinstance(obj, type) and (
+            issubclass(obj, snmpbase.WalkRequired)
+            or issubclass(obj, snmpbase.ZeroIndex)
+        ):
             results.append(attr)
     return results
 
@@ -23,21 +23,6 @@ def get_snmpbase_object(name):
         print(f"Valid object names: \n{NEWLINE.join(get_snmpbase_objects())}")
         raise argparse.ArgumentTypeError(f"Invalid object: {name}")
     return result
-
-
-def get_engine(name):
-    if name == PYSNMP:
-
-        return pyeng.PySNMPEngine
-    elif name == EASYSNMP:
-        try:
-            from netdisc.snmp import easyeng
-
-            return easyeng.EasySNMPEngine
-        except ImportError:
-            raise argparse.ArgumentTypeError(f"Unable to import {EASYSNMP}")
-    else:
-        raise argparse.ArgumentTypeError(f"Invalid choice: {name}")
 
 
 parser = argparse.ArgumentParser(prog="netdisc.snmp", add_help=False)
@@ -89,15 +74,18 @@ snmp_arg_group.add_argument(
 
 debug_parser = argparse.ArgumentParser(add_help=False)
 
-debug_parser.add_argument(
+debug_parser_group = debug_parser.add_argument_group("SNMP Debug Args")
+
+debug_parser_group.add_argument(
     "--snmp-engine",
-    type=get_engine,
-    default=pyeng.PySNMPEngine,
-    help=f"SNMP Engine: {PYSNMP} (default) or {EASYSNMP}",
+    type=str,
+    choices=[discover.PYSNMP, discover.EASYSNMP],
+    default=discover.PYSNMP,
+    help=f"SNMP Engine: {discover.PYSNMP} (default) or {discover.EASYSNMP}",
 )
 
-debug_parser.add_argument(
+debug_parser_group.add_argument(
     "--object",
     type=get_snmpbase_object,
-    help=f"SNMP Object Name: ",
+    help=f"{', '.join(get_snmpbase_objects())}",
 )

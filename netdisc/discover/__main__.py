@@ -4,6 +4,7 @@ import pathlib
 from netdisc.base import threaded, topology
 from netdisc.discover import authen, looper, worker
 from netdisc.snmp import snmpargs, pyeng, easyeng, snmpbase, mibhelp
+from netdisc.snmp import discover as snmp_discover
 from netdisc.tools import log_setup, pandor, interactive
 
 logger = logging.getLogger(__name__)
@@ -22,34 +23,33 @@ def get_filter_from_file(filename):
         raise argparse.ArgumentTypeError(str(exc))
 
 
-args = argparse.ArgumentParser(add_help=False)
-args.add_argument(
-    "-f",
-    "--filter-file",
-    type=get_filter_from_file,
-    default=pandor.AllowAll(),
-    help="File containing netdisc filter",
-)
+def get_args():
+    args = argparse.ArgumentParser(add_help=False)
+    args_group = args.add_argument_group("Discover Options")
+    args_group.add_argument(
+        "-f",
+        "--filter-file",
+        type=get_filter_from_file,
+        default=pandor.AllowAll(),
+        help="File containing netdisc filter",
+    )
 
-args.add_argument(
-    "-i",
-    "--interactive",
-    action="store_const",
-    const=interactive.InteractiveNeighborFilter(),
-    help="Interactively filter neighbors",
-)
+    args_group.add_argument(
+        "-i",
+        "--interactive",
+        action="store_const",
+        const=interactive.InteractiveNeighborFilter(),
+        help="Interactively filter neighbors",
+    )
 
-for_help_only = argparse.ArgumentParser(
-    parents=[
-        log_setup.log_parser,
-        snmpargs.parser,
-        snmpargs.debug_parser,
-        args,
-    ],
-)
-
-
-if __name__ == "__main__":
+    for_help_only = argparse.ArgumentParser(
+        parents=[
+            log_setup.log_parser,
+            snmpargs.parser,
+            snmpargs.debug_parser,
+            args,
+        ],
+    )
     for_help_only.parse_args()
     (parsed_snmp, remaining) = snmpargs.parser.parse_known_args()
     (parsed_discover, _) = args.parse_known_args()
@@ -57,21 +57,21 @@ if __name__ == "__main__":
     args = vars(parsed_snmp).copy()
     log_setup.set_logger_from_args()
     hostlist = [args.pop("host")]
+    extra = {}
+    extra[snmp_discover.EXTRA_KEY] = {snmp_discover.ENGINE_KEY: snmp_debug.snmp_engine}
+    return args, hostlist, parsed_discover, parsed_snmp, extra
 
-    # engine = snmp_debug.snmp_engine
-    # if engine is pyeng.PySNMPEngine:
-    #     helper = mibhelp.MIBHelper(flags=snmpbase.MIBXlate.PYSNMP)
-    # elif engine is easyeng.EasySNMPEngine:
-    #     helper = mibhelp.MIBHelper(flags=snmpbase.MIBXlate.EASYSNMP)
-    # loaded_engine = engine(mib_helper=helper, **kwargs)
 
+if __name__ == "__main__":
+    args, hostlist, parsed_discover, parsed_snmp, extra = get_args()
     auths = authen.AuthMethodList()
     auths.load_authentication_methods(dict(from_cli=args))
     with (
         topology.MemoryTopology() as topo,
-        threaded.WorkerPoolThread(worker.discovery_dispatch, 1, 20) as pool,
+        threaded.WorkerPoolThread(
+            worker=worker.discovery_dispatch, timeout=1, max_workers=20
+        ) as pool,
     ):
-
         # pool = threaded.WorkerPoolThread(worker.discovery_dispatch, 1, 2).__enter__()
         # topo = topology.MemoryTopology().__enter__()
         runner = looper.DiscoveryRunner(
@@ -82,8 +82,6 @@ if __name__ == "__main__":
             discovered_q=pool.output,
             filter=parsed_discover.filter_file,
             interactive=parsed_discover.interactive,
+            extra=extra,
         )
         runner.loop()
-        import pprint
-
-        pprint.pp(runner._pending)

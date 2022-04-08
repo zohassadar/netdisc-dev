@@ -15,10 +15,10 @@ import pysnmp.smi.view
 import pysnmp.smi.error
 from netdisc.snmp import pymibs, snmpbase
 
-MIBSOURCE = str(pathlib.Path(pymibs.__file__).parent)
+# MIBSOURCE = str(pathlib.Path(pymibs.__file__).parent)
 
-if os.name == "nt":
-    MIBSOURCE = f"file://{MIBSOURCE}"
+# if os.name == "nt":
+#     MIBSOURCE = f"file://{MIBSOURCE}"
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -41,7 +41,7 @@ FLAG_MAP = FlagFunctionMapper()
 
 @dataclasses.dataclass
 class MIBHelper:
-    mib_source: str = MIBSOURCE
+    # mib_source: str = MIBSOURCE
     flags: snmpbase.MIBXlate = snmpbase.MIBXlate.NONE
 
     def __post_init__(self):
@@ -52,7 +52,7 @@ class MIBHelper:
         logger.debug("Adding MIB Compiler")
         pysnmp.smi.compiler.addMibCompiler(self.mib_builder)
         logger.debug("Adding MIB Sources")
-        self.mib_builder.addMibSources(pysnmp.smi.builder.DirMibSource(self.mib_source))
+        # self.mib_builder.addMibSources(pysnmp.smi.builder.DirMibSource(self.mib_source))
         self._mibs_loaded = set()
         self._lookups_loaded = set()
 

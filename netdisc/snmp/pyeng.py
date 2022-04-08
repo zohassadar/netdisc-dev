@@ -49,6 +49,7 @@ PY_PRIV_TABLE = {
 
 class PySNMPEngine(engine.SNMPEngine):
     __doc__ == engine.SNMPEngine.__doc__
+    FLAGS = snmpbase.MIBXlate.PYSNMP
 
     def __init__(self, *args, **kwargs):
         logger.info("PySNMPEngine Initialized: %s %s", args, kwargs)
@@ -212,9 +213,10 @@ class PySNMPEngine(engine.SNMPEngine):
     def _get_var_bindings(self, *paths) -> list:
         var_bindings = []
 
-        get_obj_id = lambda path: pysnmp.hlapi.ObjectIdentity(*path).addMibSource(
-            self.mib_helper.mib_source
-        )
+        # get_obj_id = lambda path: pysnmp.hlapi.ObjectIdentity(*path).addMibSource(
+        #     self.mib_helper.mib_source
+        # )
+        get_obj_id = lambda path: pysnmp.hlapi.ObjectIdentity(*path)
         for path in paths:
             logger.debug("Retrieving oid info for: %s", path)
             object_identity = get_obj_id(path)

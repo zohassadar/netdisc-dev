@@ -92,6 +92,7 @@ class SNMPEngineAbstract(abc.ABC):
 
 @dataclasses.dataclass
 class SNMPEngine(SNMPEngineAbstract):
+    FLAGS = snmpbase.MIBXlate.NONE
     """netdisc snmp engine
 
     Args:
@@ -110,7 +111,6 @@ class SNMPEngine(SNMPEngineAbstract):
 
     """
 
-    mib_helper: mibhelp.MIBHelper = None
     host: str = (None,)
     port: int = 161
     community: str = None
@@ -120,6 +120,7 @@ class SNMPEngine(SNMPEngineAbstract):
     priv: str = None
     privtype: str = None
     cisco_vlan: int = None
+    flags: snmpbase.MIBXlate = None
 
     def object_get(
         self,
@@ -212,6 +213,9 @@ class SNMPEngine(SNMPEngineAbstract):
             )
 
     def __post_init__(self):
+        if self.flags is not None:
+            self.FLAGS = self.flags
+        self.mib_helper = mibhelp.MIBHelper(self.FLAGS)
         logger.debug(
             "Instantiated.  MibHelper: %s.  Cisco VLAN: %s",
             self.mib_helper,

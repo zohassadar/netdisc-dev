@@ -58,6 +58,7 @@ class DiscoveryRunner:
     filter: pandor.FilterAbstract = None
 
     interactive: interactive.InteractiveNeighborFilter = None
+    extra: dict = dataclasses.field(default_factory=dict)
     # outputs: list[abstract.OutputBase]
     loop_forever: bool = False
     max_loops: int = 60
@@ -102,7 +103,11 @@ class DiscoveryRunner:
         _starting_hosts = []
         for host in self.hostlist:
             logger.debug("Adding start host: %s", host)
-            _pending = PendingDevice(host=host, auth_methods=self.auth_methods.copy())
+            _pending = PendingDevice(
+                host=host,
+                auth_methods=self.auth_methods.copy(),
+                extra=self.extra,
+            )
             _starting_hosts.append(_pending)
         logger.debug("Resetting looper with %s starting hosts", len(_starting_hosts))
         self._hopper.extend(_starting_hosts)
@@ -247,6 +252,7 @@ class DiscoveryRunner:
                 host=neighbor.ip,
                 hostname=neighbor.hostname,
                 sysinfo=neighbor.sysinfo,
+                extra=self.extra,
             )
             self._hopper.append(_pending)
 
