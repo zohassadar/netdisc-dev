@@ -31,8 +31,10 @@ DEBUG_FORMAT_FILENAME = dict(
 )
 
 
-log_parser = argparse.ArgumentParser(description="Debug Options", add_help=False)
-log_parser.add_argument(
+log_parser = argparse.ArgumentParser(add_help=False)
+
+log_parser_group = log_parser.add_argument_group("Logging options")
+log_parser_group.add_argument(
     "-v",
     "--verbose",
     action="count",
@@ -40,40 +42,40 @@ log_parser.add_argument(
     help="Logging verbosity.  -v through -vvvvv",
 )
 
-log_parser.add_argument(
+log_parser_group.add_argument(
     "--debug-file",
     type=str,
     help="Debug output file",
 )
 
-log_parser.add_argument(
+log_parser_group.add_argument(
     "--debug-file-level",
     type=int,
     default=5,
     help="Debug file level.  1-5.  Default 5",
 )
 
-log_parser.add_argument(
+log_parser_group.add_argument(
     "--debug-file-size",
     type=int,
     default=10,
     help="Size in MB of debug file.  Default 10",
 )
 
-log_parser.add_argument(
+log_parser_group.add_argument(
     "--debug-file-depth",
     type=int,
     default=1,
     help="Number of archived debug files.  Minimum 1.  Default 1.",
 )
 
-log_parser.add_argument(
+log_parser_group.add_argument(
     "--include-path",
     action="store_true",
     help="Include entire module path in debug output",
 )
 
-log_parser.add_argument(
+log_parser_group.add_argument(
     "--modules",
     nargs="+",
     help="Limit logging to module(s)",
