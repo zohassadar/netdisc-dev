@@ -32,7 +32,7 @@ SNMPv2_MAP = {
 IFMIB_MAP = {
     "interface_name": ("ifDescr", unfiltered),
     "description": ("ifAlias", unfiltered),
-    "speed": ("ifSpeed", unfiltered),
+    "speed": ("ifHighSpeed", unfiltered),
 }
 
 
