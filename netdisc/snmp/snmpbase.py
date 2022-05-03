@@ -128,7 +128,7 @@ class IFMIB(WalkRequired):
     ifName: str = None
     ifDescr: str = None
     ifMtu: str = None
-    ifSpeed: str = None
+    ifHighSpeed: str = None
     ifPhysAddress: str = dataclasses.field(
         metadata=xlate(
             key=MIBXlate.MAC,
