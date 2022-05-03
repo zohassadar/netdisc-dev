@@ -2,7 +2,7 @@ import argparse
 import pprint
 
 from netdisc.discover import dischelp
-from netdisc.snmp import easyeng, gatherer, mibhelp, pyeng, snmpargs, snmpbase
+from netdisc.snmp import gatherer, snmpargs, discover
 from netdisc.snmp.engine import SNMPEngine
 from netdisc.tools import log_setup
 
@@ -26,9 +26,9 @@ def print_object(engine: SNMPEngine, snmpobj):
 if __name__ == "__main__":
     help_only = argparse.ArgumentParser(
         parents=[
-            log_setup.log_parser,
-            snmpargs.debug_parser,
             snmpargs.parser,
+            snmpargs.debug_parser,
+            log_setup.log_parser,
         ],
     )
     help_only.parse_args()
@@ -37,14 +37,9 @@ if __name__ == "__main__":
     log_setup.set_logger_from_args()
 
     kwargs = vars(snmp_args).copy()
+    engine = discover.get_engine(debug_args.snmp_engine)
 
-    engine = debug_args.snmp_engine
-    if engine is pyeng.PySNMPEngine:
-        helper = mibhelp.MIBHelper(flags=snmpbase.MIBXlate.PYSNMP)
-    elif engine is easyeng.EasySNMPEngine:
-        helper = mibhelp.MIBHelper(flags=snmpbase.MIBXlate.EASYSNMP)
-    loaded_engine = engine(mib_helper=helper, **kwargs)
-
+    loaded_engine = engine(**kwargs)
     if debug_args.object:
         print_object(loaded_engine, debug_args.object)
     else:

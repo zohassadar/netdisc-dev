@@ -6,6 +6,7 @@
 *.pyc
 *.rc
 *.sh
+*.pstats
 !devmibs.sh
 
 *.ini
