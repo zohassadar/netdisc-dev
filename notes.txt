@@ -77,3 +77,18 @@ find . -name "*.py" -path "./netdisc/*" | xargs pre-commit run --files
 #Run coverage, report, then run nginx webserver to see coverage:
 python -m coverage run -m pytest && coverage html
 docker run --name ndweb -p 42000:80 -v htmlcov:/usr/share/nginx/html:ro -d nginx
+
+
+
+# Centos 3.10 from source
+
+sudo yum groupinstall "Development Tools" -y
+sudo yum install openssl-devel libffi-devel bzip2-devel sqlite-devel readline-devel -y
+cd /tmp
+wget https://www.python.org/ftp/python/3.10.4/Python-3.10.4.tgz
+tar xvfz Python-3.10.4.tgz
+cd Python-3.10.4
+./configure --enable-optimizations
+make -j $(nproc)
+#altinstall writes python3.10 instead of python
+sudo make altinstall
